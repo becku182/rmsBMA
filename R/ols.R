@@ -1,10 +1,29 @@
-## 2. ols - function that calculates all relevant ols statistics (coefficients, standard errors, Marginal likelihood, R^2, degrees of freedom, determinant of the regressors's matrix,log(Marginal likelihood)) #########
-
-### PARAMETERS OF THE FUNCTION ###
-## y - dependent variables ##
-## x - matrix of regressors ##
-## const should we include a constants
-
+#' OLS calculation with additional objects
+#'
+#' @param y A vector with the dependent variable.
+#' @param x A matrix with with regressors as columns or 0 for model without any regressors.
+#' @param const Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.
+#'
+#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix, log(Marginal likelihood).
+#' @export
+#'
+#' @examples
+#' x1<-rnorm(10, mean = 0, sd = 1)
+#' x2<-rnorm(10, mean = 0, sd = 2)
+#' y<-2+x1+2*x2
+#' x<-cbind(x1,x2)
+#' const<-1
+#' ols(y,x,const)
+#'
+#' @examples
+#' x1<-rnorm(10, mean = 0, sd = 1)
+#' x2<-rnorm(10, mean = 0, sd = 2)
+#' e<-rnorm(10, mean = 0, sd = 0.5)
+#' y<-2+x1+2*x2+e
+#' x<-cbind(x1,x2)
+#' const<-1
+#' ols(y,x,const)
+#'
 ols<-function(y,x,const){ # function that provides ols estimates and additional statistics
   # HERE SHOULD BE A TEST IF X AND Y ARE OF THE SAME LENGTH
 
@@ -28,7 +47,7 @@ ols<-function(y,x,const){ # function that provides ols estimates and additional 
   # we need to calculate Dilution before we add vector of ones to the regressors data matrix
   n<-ncol(as.matrix(x))
   # Dilution must be calculated before adding the vector of ones to data matrix x
-  Diluntion<-(det(cor(x)))  # we assign dilution to be used in dilution prior (George 2010)
+  Diluntion<-(det(stats::cor(x)))  # we assign dilution to be used in dilution prior (George 2010)
 
   # ADDING A CONSTANT by adding a vector of ones
   if (const==1){
