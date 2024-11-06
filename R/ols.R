@@ -15,7 +15,6 @@
 #' const<-1
 #' ols(y,x,const)
 #'
-#' @examples
 #' x1<-rnorm(10, mean = 0, sd = 1)
 #' x2<-rnorm(10, mean = 0, sd = 2)
 #' e<-rnorm(10, mean = 0, sd = 0.5)
@@ -25,7 +24,6 @@
 #' ols(y,x,const)
 #'
 ols<-function(y,x,const){ # function that provides ols estimates and additional statistics
-  # HERE SHOULD BE A TEST IF X AND Y ARE OF THE SAME LENGTH
 
   # DATA PREPARATION
   y<-as.matrix(y) # changing vector of dependent variables into a matrix
