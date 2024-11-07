@@ -8,9 +8,8 @@ test_that("ModelSpace builds correct ols_results table (1)", {
   e<-rnorm(20, mean = 0, sd = 0.5)
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
-  const<-1
   M<-6
-  mSpace<-modelSpace(data,M,const)
+  mSpace<-modelSpace(data,M)
   expect_equal(as.numeric(mSpace[3]),2^M)
 })
 
@@ -24,10 +23,9 @@ test_that("ModelSpace builds correct ols_results table (1)", {
   e<-rnorm(20, mean = 0, sd = 0.5)
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
-  const<-0
   M<-6
-  mSpace<-modelSpace(data,M,const)
-  expect_equal(as.numeric(mSpace[3]),(2^M)-1)
+  mSpace<-modelSpace(data,M)
+  expect_equal(as.numeric(mSpace[3]),(2^M))
 })
 
 test_that("ModelSpace builds correct ols_results table (3)", {
@@ -40,9 +38,8 @@ test_that("ModelSpace builds correct ols_results table (3)", {
   e<-rnorm(20, mean = 0, sd = 0.5)
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
-  const<-1
   M<-4
-  mSpace<-modelSpace(data,M,const)
+  mSpace<-modelSpace(data,M)
   expect_equal(as.numeric(mSpace[3]),1+choose(6,1)+choose(6,2)+choose(6,3)+choose(6,4))
 })
 
@@ -56,8 +53,7 @@ test_that("ModelSpace builds correct ols_results table (4)", {
   e<-rnorm(20, mean = 0, sd = 0.5)
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
-  const<-0
   M<-3
-  mSpace<-modelSpace(data,M,const)
-  expect_equal(as.numeric(mSpace[3]),choose(6,1)+choose(6,2)+choose(6,3))
+  mSpace<-modelSpace(data,M)
+  expect_equal(as.numeric(mSpace[3]),1+choose(6,1)+choose(6,2)+choose(6,3))
 })

@@ -4,14 +4,12 @@
 \alias{modelSpace}
 \title{Calculation of the model space}
 \usage{
-modelSpace(data, M, const)
+modelSpace(data, M)
 }
 \arguments{
 \item{data}{Data set to work with.}
 
 \item{M}{Maximum number of regressor in the estimated models.}
-
-\item{const}{Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.}
 }
 \value{
 A list with modelSpace objects: \cr
@@ -20,8 +18,7 @@ A list with modelSpace objects: \cr
 \item ols_results - table with the model space - contains ols objects for all the estimated models\cr
 \item ms - size of the mode space (the number of the last estimated model) \cr
 \item M - maximum number of regressors in a model \cr
-\item K- total number of regressors \cr
-\item const - parameter informing if constant should be included in examined models
+\item K- total number of regressors
 }
 }
 \description{
@@ -37,8 +34,7 @@ x6<-rnorm(20, mean = 0, sd = 4)
 e<-rnorm(20, mean = 0, sd = 0.5)
 y<-2+x1+2*x2+e
 data<-cbind(y,x1,x2,x3,x4,x5,x6)
-const<-1
-modelSpace(data,M=3,const)
+modelSpace(data,M=3)
 
 x1<-rnorm(20, mean = 0, sd = 1)
 x2<-rnorm(20, mean = 0, sd = 2)
@@ -53,7 +49,6 @@ x10<-rnorm(20, mean = 0, sd = 4)
 e<-rnorm(20, mean = 0, sd = 0.5)
 y<-2+x3+2*x5+e
 data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
-const<-0
-modelSpace(data,M=8,const)
+modelSpace(data,M=8)
 
 }

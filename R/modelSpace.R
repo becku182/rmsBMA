@@ -4,15 +4,13 @@
 #'
 #' @param data Data set to work with.
 #' @param M Maximum number of regressor in the estimated models.
-#' @param const Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.
 #'
 #' @return A list with modelSpace objects: \cr
 #' 1. x_names - vector with names of the regressors \cr
 #' 2. ols_results - table with the model space - contains ols objects for all the estimated models\cr
 #' 3. ms - size of the mode space (the number of the last estimated model) \cr
 #' 4. M - maximum number of regressors in a model \cr
-#' 5. K- total number of regressors \cr
-#' 6. const - parameter informing if constant should be included in examined models
+#' 5. K- total number of regressors
 #'
 #' @export
 #'
@@ -26,8 +24,7 @@
 #' e<-rnorm(20, mean = 0, sd = 0.5)
 #' y<-2+x1+2*x2+e
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6)
-#' const<-1
-#' modelSpace(data,M=3,const)
+#' modelSpace(data,M=3)
 #'
 #' x1<-rnorm(20, mean = 0, sd = 1)
 #' x2<-rnorm(20, mean = 0, sd = 2)
@@ -42,11 +39,10 @@
 #' e<-rnorm(20, mean = 0, sd = 0.5)
 #' y<-2+x3+2*x5+e
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
-#' const<-0
-#' modelSpace(data,M=8,const)
+#' modelSpace(data,M=8)
 #'
 
-modelSpace=function(data,M,const){
+modelSpace=function(data,M){
   # collecting data characteristics
   m<-nrow(data) # number of rows in the data
   n<-ncol(data) # number of columns in the data
@@ -65,22 +61,19 @@ modelSpace=function(data,M,const){
   y<-as.matrix(data[,1]) # data on the regressant (dependend variable)
   x<-as.matrix(data[,2:n]) # data on the regressors
 
-  # s indicates the smalest model size under the consideration (0 variables or 1 variable)
-  if (const==1){s=0}else {s=1}
-
   MS=0 # MS a variable representing the size of the model space (total number of models)
-  for (k in s:M){# at this LOOP we add all combinations of regressors up to models with M variables
+  for (k in 0:M){# at this LOOP we add all combinations of regressors up to models with M variables
     c=choose(K,k) # number of models of the size k out of K regressors
     MS=MS+c} # this sum adds up all the models for each possible model size
 
   # we build a table for all ols statistics
-  ols_results=matrix(0,nrow=MS,ncol=3*M+4+2*const)
+  ols_results=matrix(0,nrow=MS,ncol=3*M+6)
 
   # ms - model index
   ms=0 #starting value for counting the number of the model
 
   # k indicates the number of variables in the model
-  for (k in s:M){ # at this LOOP we create all possible model sizes
+  for (k in 0:M){ # at this LOOP we create all possible model sizes
     c=choose(K,k) # number of models of the size k out of K regressors
     if (k==0){ # CONDITION for the special case of a model with no variables and a constant
       ols1_model<-ols(y=y,x=0,const=1) # estimation of the model with a constant and no regressors
@@ -105,18 +98,15 @@ modelSpace=function(data,M,const){
         } # end of the LOOP that collects the regressors for the model t
         x_ms<-x_ms[,-1] # we delete an artificial vector from the regressor matrix
         ms=ms+1 # we update the index of the model
-        model_ms<-ols(y,x_ms,const) #estimation of the model ms
-        ols_results[ms,3*M+2*const+1]=as.numeric(model_ms[3]) #here we extract value of the Likelihood function
-        ols_results[ms,3*M+2*const+2]=as.numeric(model_ms[4]) #here we extract R2
-        ols_results[ms,3*M+2*const+3]=as.numeric(model_ms[5]) #here we extract the number of degrees of freedom
-        ols_results[ms,3*M+2*const+4]=as.numeric(model_ms[6]) # here we extract information for dilution prior
-        for (p in 1:(k+const)){# LOOP performs extraction of the coefficients and the standard errors from the model
+        model_ms<-ols(y,x_ms,const=1) #estimation of the model ms
+        ols_results[ms,3*M+3]=as.numeric(model_ms[3]) #here we extract value of the Likelihood function
+        ols_results[ms,3*M+4]=as.numeric(model_ms[4]) #here we extract R2
+        ols_results[ms,3*M+5]=as.numeric(model_ms[5]) #here we extract the number of degrees of freedom
+        ols_results[ms,3*M+6]=as.numeric(model_ms[6]) # here we extract information for dilution prior
+        for (p in 1:(k+1)){# LOOP performs extraction of the coefficients and the standard errors from the model
           ols_results[ms,M+p]=as.numeric(model_ms[[1]][[p]]) # extraction of the coefficients
-          ols_results[ms,2*M+const+p]=as.numeric(model_ms[[2]][[p]]) # extraction of the standard errors
-          if (const==1){# CONDITION - the case of a model WITH a constant
-            if (p<k+const){ols_results[ms,p]=mod[p]} # here we extract indices of the used regressors
-          }else if (const==0){# CONDITION - the case of a model WITHOUT a constant
-            ols_results[ms,p]=mod[p]} # here we extract indices of the used regressors
+          ols_results[ms,2*M+1+p]=as.numeric(model_ms[[2]][[p]]) # extraction of the standard errors
+          if (p<k+1){ols_results[ms,p]=mod[p]} # here we extract indices of the used regressors
         }# end of the LOOP performs extraction of the coefficients and the standard errors from the model
       } # end of the LOOP that estimates the individual models with with one or more regressors (k>=0)
     } # end of the CONDITION for the general case - model with regressors
@@ -130,13 +120,12 @@ modelSpace=function(data,M,const){
     reg_presence[1,m]=paste0("Reg_",m)
     Betas[1,m]=paste0("Coef_",m)
     SEs[1,m]=paste0("SE_",m)}
-  if (const==1){
-    Betas=cbind("Coef_Const",Betas)
-    SEs=cbind("SE_Const",SEs)}
+  Betas=cbind("Coef_Const",Betas)
+  SEs=cbind("SE_Const",SEs)
 
   ols_names<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
   colnames(ols_results)<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
 
-  out<-list(x_names,ols_results,ms,M,K,const) # we create a modelSpace object (mS object) - a list with:
+  out<-list(x_names,ols_results,ms,M,K) # we create a modelSpace object (mS object) - a list with:
   return(out)
 }
