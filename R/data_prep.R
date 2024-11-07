@@ -84,6 +84,7 @@ data_prep <- function(data,FE=0,Time=0,Section=0,Time_FE=0,Section_FE=0,STD=0){#
       For_TFE2 <- For_TFE[,3:(n+2)]
       TFE_ID <- For_TFE[,1:2]
       For_S_means <- diag(m)-kronecker(matrix(1,nrow=Time,ncol=Time),(1/Time)*diag(Section))
+      For_S_means<-Matrix::Matrix(For_S_means,sparse=TRUE)
       TFE <- round(For_S_means%*%For_TFE2,11)
       After <- cbind(TFE_ID,TFE)
       FEdata <- After[order(After[, 2]),]
@@ -95,6 +96,7 @@ data_prep <- function(data,FE=0,Time=0,Section=0,Time_FE=0,Section_FE=0,STD=0){#
       For_SFE2 <- For_SFE[,3:(n+2)]
       SFE_ID <- For_SFE[,1:2]
       For_T_means <- diag(m)-kronecker(matrix(1,nrow=Section,ncol=Section),(1/Section)*diag(Time))
+      For_T_means<-Matrix::Matrix(For_T_means,sparse=TRUE)
       SFE <- round(For_T_means%*%For_SFE2,11)
       After <- cbind(SFE_ID,SFE)
       FEdata <- After[order(After[, 2]),]
