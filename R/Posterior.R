@@ -1,11 +1,76 @@
-Posterior=function(modelSpace,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=NULL,EMS=NULL){
+#' Calculation of of the posterior objects
+#'
+#' This function calculates posterior objects for the model space (mS) object obtained using modelSpace function.
+#'
+#' @param modelSpace Model space (mS) object (the results of the modelSpace function)
+#' @param EMS Expected model size for model binomial and binomial-beta model prior. Works only if M=K - Bayesian model averaging on the full model space.
+#' @param dilution Binary parameter: 0 - NO application of a dilution prior; 1 - application of a dilution prior (George 2010).
+#' @param dil.Par Parameter associated with dilution prior - the exponent of the determinant (George 2010). Used only if parameter dilution=1.
+#' @param Narrative Binary parameter: 0 - NO application of a Narrative dilution prior; 1 - application of a Narrative dilution prior.
+#' @param p Parameter that indicates by how much we cut probability of a model with substitutes.
+#' @param Nar_vec Vector with information on narrative dilution prior where: 0 - the variable has no substitutes; numbers different than 0 denote consecutive groups of variables considered to be substitutes.
+#'
+#' @return A list with Posterior objects: \cr
+#' 1. PMP_uniform_table - table with results with PMP under binomial model prior \cr
+#' 2. PMP_random_table - table with results with PMP under binomial-beta model prior \cr
+#' 3. EBA - table with results of Extreme Bounds Analysis \cr
+#' 4. R2_uniform_table- table with results with R^2 under binomial model model prior \cr
+#' 5. R2_random_table - table with results with R^2 under binomial-beta model prior \cr
+#' 6. x_names - vector with names of the regressors - to be used by the functions \cr
+#' 7. M - maximum number of regressors in a model \cr
+#' 8. K - total number of regressors \cr
+#' 9. MS - size of the mode space \cr
+#' 10. PIPs - table with PIP under different model priors for Jointness function \cr
+#' 11. forJointnes - table with model IDs and PMPs for Jointness function \cr
+#' 12. forBestModels - table with model IDs, PMPs, coefficients, variances, degrees of freedom, and R^2 for bestModels function \cr
+#' 13. sizePriors - table with unifrom and random model priors spread over model sizes for modelSizes function \cr
+#' 14. modelPosterior - table with posterior model probabilities for modelSizes function
+#'
+#' @export
+#'
+#' @examples
+#' x1<-rnorm(20, mean = 0, sd = 1)
+#' x2<-rnorm(20, mean = 0, sd = 2)
+#' x3<-rnorm(20, mean = 0, sd = 3)
+#' x4<-rnorm(20, mean = 0, sd = 1)
+#' x5<-rnorm(20, mean = 0, sd = 2)
+#' x6<-rnorm(20, mean = 0, sd = 4)
+#' e<-rnorm(20, mean = 0, sd = 0.5)
+#' y<-2+x1+2*x2+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6)
+#' modelS<-modelSpace(data,M=3)
+#' Posterior(modelS)
+#'
+#' x1<-rnorm(20, mean = 0, sd = 1)
+#' x2<-rnorm(20, mean = 0, sd = 2)
+#' x3<-rnorm(20, mean = 0, sd = 3)
+#' x4<-rnorm(20, mean = 0, sd = 1)
+#' x5<-rnorm(20, mean = 0, sd = 2)
+#' x6<-rnorm(20, mean = 0, sd = 4)
+#' x7<-rnorm(20, mean = 0, sd = 3)
+#' x8<-rnorm(20, mean = 0, sd = 1)
+#' x9<-rnorm(20, mean = 0, sd = 2)
+#' x10<-rnorm(20, mean = 0, sd = 4)
+#' e<-rnorm(20, mean = 0, sd = 0.5)
+#' y<-2+x3+2*x5+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+#' modelS<-modelSpace(data,M=8)
+#' Posterior(modelS)
+#'
+
+Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=NULL){
 
   # Extraction of the elements of the mS object
-  x_names<-modelS[[1]][] # extraction of the regressors names from the mS object
-  ols_results<-modelS[[2]][] # extraction of the ols results (the model space) from the mS object
-  MS<-modelS[[3]][1] # extraction of the total number of models
-  M<-modelS[[4]][1] # extraction of the maximum number of regressors in the model
-  K<-modelS[[5]][1] # extraction of the total number of regressors
+  K<-modelSpace[[5]][1] # extraction of the total number of regressors
+  if (is.null(modelSpace[[1]][])){
+    x_names<-matrix(0,nrow=1,ncol=K)
+    for (k in 1:K){x_names[1,k]=paste0("k_",k)}
+  }else{
+    x_names<-modelSpace[[1]][] # extraction of the regressors names from the mS object
+  }
+  ols_results<-modelSpace[[2]][] # extraction of the ols results (the model space) from the mS object
+  MS<-modelSpace[[3]][1] # extraction of the total number of models
+  M<-modelSpace[[4]][1] # extraction of the maximum number of regressors in the model
 
   # Dividing ols results into relevant parts
   Reg_ID<-ols_results[,1:M] # we extract vector indices
@@ -143,10 +208,10 @@ Posterior=function(modelSpace,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=N
           # POSTERIOR PROBABILITY OF A POSTERIOR SIGN P(+)
           # here we calculate posterior probability of a positive sign P(+) for the relevant expression
           # see Doppelhofer and Weeks (2009) p. 216 for the details of the expression
-          Plus_PMP_uniform[k,1]=Plus_PMP_uniform[k,1]+PMP_uniform[i,1]*pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
-          Plus_R2_uniform[k,1]=Plus_R2_uniform[k,1]+PMP_R2_uniform[i,1]*pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
-          Plus_PMP_random[k,1]=Plus_PMP_random[k,1]+PMP_random[i,1]*pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
-          Plus_R2_random[k,1]=Plus_R2_random[k,1]+PMP_R2_random[i,1]*pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
+          Plus_PMP_uniform[k,1]=Plus_PMP_uniform[k,1]+PMP_uniform[i,1]*stats::pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
+          Plus_R2_uniform[k,1]=Plus_R2_uniform[k,1]+PMP_R2_uniform[i,1]*stats::pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
+          Plus_PMP_random[k,1]=Plus_PMP_random[k,1]+PMP_random[i,1]*stats::pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
+          Plus_R2_random[k,1]=Plus_R2_random[k,1]+PMP_R2_random[i,1]*stats::pt(betas[i,t+1]/(VAR[i,t+1])^0.5,df =DF[i])
           # % OF POSITVE BETAS
           if (betas[i,t+1]>0){# CONDITION for counting models with POSITIVE coefficients
             Plus_prep[i,k]=1 # we set 1 to Plus_prep for models in which regressors have positive coefficients
@@ -249,10 +314,10 @@ Posterior=function(modelSpace,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=N
     # POSTERIOR PROBABILITY OF A POSTERIOR SIGN P(+)
     # here we calculate posterior probability of a positive sign P(+) for the relevant expression
     # see Doppelhofer and Weeks (2009) p. 216 for the details of the expression
-    Plus_const_PMP_uniform<-Plus_const_PMP_uniform+PMP_uniform[i,1]*pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
-    Plus_const_R2_uniform<-Plus_const_R2_uniform+PMP_R2_uniform[i,1]*pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
-    Plus_const_PMP_random<-Plus_const_PMP_random+PMP_random[i,1]*pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
-    Plus_const_R2_random<-Plus_const_R2_random+PMP_R2_random[i,1]*pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
+    Plus_const_PMP_uniform<-Plus_const_PMP_uniform+PMP_uniform[i,1]*stats::pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
+    Plus_const_R2_uniform<-Plus_const_R2_uniform+PMP_R2_uniform[i,1]*stats::pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
+    Plus_const_PMP_random<-Plus_const_PMP_random+PMP_random[i,1]*stats::pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
+    Plus_const_R2_random<-Plus_const_R2_random+PMP_R2_random[i,1]*stats::pt(betas[i,1]/(VAR[i,1])^0.5,df =DF[i])
     # % OF POSITVE BETAS
     if (betas[i,1]>0){ # CONDITION for counting models with POSITIVE coefficients
       Plus_const<-(1/MS)+Plus_const # at this step we add percentage associated with
@@ -361,19 +426,4 @@ Posterior=function(modelSpace,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=N
 
   return(out)
 
-  # 1. OBJECT 1: Table with results with PMP under uniform model prior
-  # 2. OBJECT 2: Table with results with PMP under random model prior
-  # 3. OBJECT 3: Table with results of Extreme Bounds Analysis
-  # 4. OBJECT 4: Table with results with R^2 under uniform model prior
-  # 5. OBJECT 5: Table with results with R^2 under random model prior
-  # 6. OBJECT 6: x_names - vector with names of the regressors - to be used by othe functions
-  # 7. OBJECT 7: M - maximum number of regressors in a model
-  # 8. OBJECT 8: K - total number of regressors
-  # 9. OBJECT 9: MS - size of the mode space
-  # 10. OBJECT 10: Table with PIP under different model priors for Jointness function: PIPs
-  # 11. OBJECT 11: Table with model IDs and PMPs for Jointness function: forJointnes
-  # 12. OBJECT 12: Table with model IDs, PMPs, coefficients, variances, degrees of freedom, and R^2 for bestModels function: forBestModels
-  # 13. OBJECT 13: Table with unifrom and random model priors spread over model sizes for modelSizes function: sizePriors
-  # 14. OBJECT 14: Table with posterior model probabilities for modelSizes function: modelPosterior
-  # 15. OBJECT 15: Nar_vec - TO BE ADDED
 }# THE END of the Posterior FUNCTION

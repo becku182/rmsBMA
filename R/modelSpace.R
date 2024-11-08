@@ -49,7 +49,7 @@ modelSpace=function(data,M){
   K<-n-1 # number of regressors
 
   # collecting names of the used variables
-  Var_names<-names(data) # names of the variables
+  Var_names<-colnames(data) # names of the variables
   x_names<-Var_names[2:n] # names of the regressors
 
   if (M>K){# CONDITION about what to do if the user set M that is higher than K (M>K)
@@ -126,6 +126,6 @@ modelSpace=function(data,M){
   ols_names<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
   colnames(ols_results)<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
 
-  out<-list(x_names,ols_results,ms,M,K) # we create a modelSpace object (mS object) - a list with:
+  out<-list(x_names,ols_results,ms,M,K) # we create a modelSpace object (mS object)
   return(out)
 }

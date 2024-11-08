@@ -10,10 +10,12 @@ The goal of rmsBMA is to …
 
 ## Installation
 
-You can install the development version of rmsBMA like so:
+You can install the development version of rmsBMA from
+[GitHub](https://github.com/) with:
 
 ``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# install.packages("pak")
+pak::pak("becku182/rmsBMA")
 ```
 
 ## Example
