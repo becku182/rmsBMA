@@ -15,7 +15,7 @@ Posterior(
 )
 }
 \arguments{
-\item{modelSpace}{Model space (mS) object (the results of the modelSpace function)}
+\item{modelSpace}{Model space (mS) object (the result of the modelSpace function)}
 
 \item{EMS}{Expected model size for model binomial and binomial-beta model prior. Works only if M=K - Bayesian model averaging on the full model space.}
 
@@ -44,8 +44,9 @@ A list with Posterior objects: \cr
 \item PIPs - table with PIP under different model priors for Jointness function \cr
 \item forJointnes - table with model IDs and PMPs for Jointness function \cr
 \item forBestModels - table with model IDs, PMPs, coefficients, variances, degrees of freedom, and R^2 for bestModels function \cr
-\item sizePriors - table with unifrom and random model priors spread over model sizes for modelSizes function \cr
-\item modelPosterior - table with posterior model probabilities for modelSizes function
+\item sizePriors - table with uniform and random model priors spread over model sizes for modelSizes function \cr
+\item modelPosterior - table with posterior model probabilities for modelSizes function \cr
+\item NarDilution - vector with factors that multiply model priors obtained from Narrative approach (appear only when parameter Narrative=1)
 }
 }
 \description{
@@ -79,5 +80,63 @@ y<-2+x3+2*x5+e
 data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
 modelS<-modelSpace(data,M=8)
 Posterior(modelS)
+
+x1<-rnorm(20, mean = 0, sd = 1)
+x2<-rnorm(20, mean = 0, sd = 2)
+x3<-rnorm(20, mean = 0, sd = 3)
+x4<-rnorm(20, mean = 0, sd = 1)
+x5<-rnorm(20, mean = 0, sd = 2)
+x6<-rnorm(20, mean = 0, sd = 4)
+e<-rnorm(20, mean = 0, sd = 0.5)
+y<-2+x1+2*x2+e
+data<-cbind(y,x1,x2,x3,x4,x5,x6)
+colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+M<-6
+mSpace<-modelSpace(data,M)
+Post<-Posterior(mSpace,dilution=1,dil.Par=0.5)
+
+x1<-rnorm(50, mean = 0, sd = 5)
+x2<-rnorm(50, mean = 0, sd = 2)
+x3<-rnorm(50, mean = 0, sd = 7)
+x4<-rnorm(50, mean = 0, sd = 1)
+x5<-rnorm(50, mean = 0, sd = 3)
+x6<-rnorm(50, mean = 0, sd = 4)
+e<-rnorm(50, mean = 0, sd = 20)
+y<-2+x1+2*x2+e
+data<-cbind(y,x1,x2,x3,x4,x5,x6)
+colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+M<-5
+mSpace<-modelSpace(data,M)
+Post<-Posterior(mSpace,dilution=1,dil.Par=0.5)
+
+x1<-rnorm(20, mean = 0, sd = 1)
+x2<-rnorm(20, mean = 0, sd = 2)
+x3<-rnorm(20, mean = 0, sd = 3)
+x4<-rnorm(20, mean = 0, sd = 1)
+x5<-rnorm(20, mean = 0, sd = 2)
+x6<-rnorm(20, mean = 0, sd = 4)
+e<-rnorm(20, mean = 0, sd = 0.5)
+y<-2+x1+2*x2+e
+data<-cbind(y,x1,x2,x3,x4,x5,x6)
+colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+M<-6
+mSpace<-modelSpace(data,M)
+Nar_vec<-as.matrix(c(0,1,1,1,2,2))
+Post<-Posterior(mSpace,Narrative=0,p=0.5,Nar_vec=Nar_vec)
+
+x1<-rnorm(50, mean = 0, sd = 5)
+x2<-rnorm(50, mean = 0, sd = 2)
+x3<-rnorm(50, mean = 0, sd = 7)
+x4<-rnorm(50, mean = 0, sd = 1)
+x5<-rnorm(50, mean = 0, sd = 3)
+x6<-rnorm(50, mean = 0, sd = 4)
+e<-rnorm(50, mean = 0, sd = 20)
+y<-2+x1+2*x2+e
+data<-cbind(y,x1,x2,x3,x4,x5,x6)
+colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+M<-5
+mSpace<-modelSpace(data,M)
+Nar_vec<-as.matrix(c(0,1,1,1,2,2))
+Post<-Posterior(mSpace,Narrative=0,p=0.5,Nar_vec=Nar_vec)
 
 }

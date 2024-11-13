@@ -1,0 +1,77 @@
+test_that("Jointness builds correct JointnessTable object (1)", {
+  x1<-rnorm(20, mean = 0, sd = 1)
+  x2<-rnorm(20, mean = 0, sd = 2)
+  x3<-rnorm(20, mean = 0, sd = 3)
+  x4<-rnorm(20, mean = 0, sd = 1)
+  x5<-rnorm(20, mean = 0, sd = 2)
+  x6<-rnorm(20, mean = 0, sd = 4)
+  e<-rnorm(20, mean = 0, sd = 0.5)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+  M<-6
+  mSpace<-modelSpace(data,M)
+  Post<-Posterior(mSpace)
+  JointnessTable<-Jointness(Post,above=1,below=2,measure="HCGHM",rho=0.5,app=3)
+  expect_equal(nrow(JointnessTable),Post[[8]])
+  expect_equal(ncol(JointnessTable),Post[[8]])
+  expect_equal(sum(abs(JointnessTable))<Post[[8]]^2,TRUE)
+})
+
+test_that("Jointness builds correct JointnessTable object (2)", {
+  x1<-rnorm(50, mean = 0, sd = 5)
+  x2<-rnorm(50, mean = 0, sd = 2)
+  x3<-rnorm(50, mean = 0, sd = 7)
+  x4<-rnorm(50, mean = 0, sd = 1)
+  x5<-rnorm(50, mean = 0, sd = 3)
+  x6<-rnorm(50, mean = 0, sd = 4)
+  e<-rnorm(50, mean = 0, sd = 20)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+  M<-5
+  mSpace<-modelSpace(data,M)
+  Post<-Posterior(mSpace)
+  JointnessTable<-Jointness(Post,above=1,below=2,measure="PPI",app=3)
+  expect_equal(nrow(JointnessTable),Post[[8]])
+  expect_equal(ncol(JointnessTable),Post[[8]])
+  expect_equal(sum(abs(JointnessTable))<Post[[8]]^2,TRUE)
+})
+
+test_that("Jointness builds correct JointnessTable object (3)", {
+  x1<-rnorm(20, mean = 0, sd = 1)
+  x2<-rnorm(20, mean = 0, sd = 2)
+  x3<-rnorm(20, mean = 0, sd = 3)
+  x4<-rnorm(20, mean = 0, sd = 1)
+  x5<-rnorm(20, mean = 0, sd = 2)
+  x6<-rnorm(20, mean = 0, sd = 4)
+  e<-rnorm(20, mean = 0, sd = 0.5)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+  M<-4
+  mSpace<-modelSpace(data,M)
+  Post<-Posterior(mSpace)
+  JointnessTable<-Jointness(Post,above=1,below=3,measure="DW",app=3)
+  expect_equal(nrow(JointnessTable),Post[[8]])
+  expect_equal(ncol(JointnessTable),Post[[8]])
+})
+
+test_that("Jointness builds correct JointnessTable object (4)", {
+  x1<-rnorm(100, mean = 0, sd = 5)
+  x2<-rnorm(100, mean = 0, sd = 3)
+  x3<-rnorm(100, mean = 0, sd = 7)
+  x4<-rnorm(100, mean = 0, sd = 4)
+  x5<-rnorm(100, mean = 0, sd = 3)
+  x6<-rnorm(100, mean = 0, sd = 4)
+  e<-rnorm(100, mean = 0, sd = 4)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+  M<-3
+  mSpace<-modelSpace(data,M)
+  Post<-Posterior(mSpace)
+  JointnessTable<-Jointness(Post,above=3,below=4,measure="LS",app=3)
+  expect_equal(nrow(JointnessTable),Post[[8]])
+  expect_equal(ncol(JointnessTable),Post[[8]])
+})

@@ -2,7 +2,7 @@
 #'
 #' This function calculates posterior objects for the model space (mS) object obtained using modelSpace function.
 #'
-#' @param modelSpace Model space (mS) object (the results of the modelSpace function)
+#' @param modelSpace Model space (mS) object (the result of the modelSpace function)
 #' @param EMS Expected model size for model binomial and binomial-beta model prior. Works only if M=K - Bayesian model averaging on the full model space.
 #' @param dilution Binary parameter: 0 - NO application of a dilution prior; 1 - application of a dilution prior (George 2010).
 #' @param dil.Par Parameter associated with dilution prior - the exponent of the determinant (George 2010). Used only if parameter dilution=1.
@@ -23,8 +23,9 @@
 #' 10. PIPs - table with PIP under different model priors for Jointness function \cr
 #' 11. forJointnes - table with model IDs and PMPs for Jointness function \cr
 #' 12. forBestModels - table with model IDs, PMPs, coefficients, variances, degrees of freedom, and R^2 for bestModels function \cr
-#' 13. sizePriors - table with unifrom and random model priors spread over model sizes for modelSizes function \cr
-#' 14. modelPosterior - table with posterior model probabilities for modelSizes function
+#' 13. sizePriors - table with uniform and random model priors spread over model sizes for modelSizes function \cr
+#' 14. modelPosterior - table with posterior model probabilities for modelSizes function \cr
+#' 15. NarDilution - vector with factors that multiply model priors obtained from Narrative approach (appears only when parameter Narrative=1)
 #'
 #' @export
 #'
@@ -56,6 +57,64 @@
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
 #' modelS<-modelSpace(data,M=8)
 #' Posterior(modelS)
+#'
+#' x1<-rnorm(20, mean = 0, sd = 1)
+#' x2<-rnorm(20, mean = 0, sd = 2)
+#' x3<-rnorm(20, mean = 0, sd = 3)
+#' x4<-rnorm(20, mean = 0, sd = 1)
+#' x5<-rnorm(20, mean = 0, sd = 2)
+#' x6<-rnorm(20, mean = 0, sd = 4)
+#' e<-rnorm(20, mean = 0, sd = 0.5)
+#' y<-2+x1+2*x2+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6)
+#' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+#' M<-6
+#' mSpace<-modelSpace(data,M)
+#' Post<-Posterior(mSpace,dilution=1,dil.Par=0.5)
+#'
+#' x1<-rnorm(50, mean = 0, sd = 5)
+#' x2<-rnorm(50, mean = 0, sd = 2)
+#' x3<-rnorm(50, mean = 0, sd = 7)
+#' x4<-rnorm(50, mean = 0, sd = 1)
+#' x5<-rnorm(50, mean = 0, sd = 3)
+#' x6<-rnorm(50, mean = 0, sd = 4)
+#' e<-rnorm(50, mean = 0, sd = 20)
+#' y<-2+x1+2*x2+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6)
+#' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+#' M<-5
+#' mSpace<-modelSpace(data,M)
+#' Post<-Posterior(mSpace,dilution=1,dil.Par=0.5)
+#'
+#' x1<-rnorm(20, mean = 0, sd = 1)
+#' x2<-rnorm(20, mean = 0, sd = 2)
+#' x3<-rnorm(20, mean = 0, sd = 3)
+#' x4<-rnorm(20, mean = 0, sd = 1)
+#' x5<-rnorm(20, mean = 0, sd = 2)
+#' x6<-rnorm(20, mean = 0, sd = 4)
+#' e<-rnorm(20, mean = 0, sd = 0.5)
+#' y<-2+x1+2*x2+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6)
+#' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+#' M<-6
+#' mSpace<-modelSpace(data,M)
+#' Nar_vec<-as.matrix(c(0,1,1,1,2,2))
+#' Post<-Posterior(mSpace,Narrative=0,p=0.5,Nar_vec=Nar_vec)
+#'
+#' x1<-rnorm(50, mean = 0, sd = 5)
+#' x2<-rnorm(50, mean = 0, sd = 2)
+#' x3<-rnorm(50, mean = 0, sd = 7)
+#' x4<-rnorm(50, mean = 0, sd = 1)
+#' x5<-rnorm(50, mean = 0, sd = 3)
+#' x6<-rnorm(50, mean = 0, sd = 4)
+#' e<-rnorm(50, mean = 0, sd = 20)
+#' y<-2+x1+2*x2+e
+#' data<-cbind(y,x1,x2,x3,x4,x5,x6)
+#' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+#' M<-5
+#' mSpace<-modelSpace(data,M)
+#' Nar_vec<-as.matrix(c(0,1,1,1,2,2))
+#' Post<-Posterior(mSpace,Narrative=0,p=0.5,Nar_vec=Nar_vec)
 #'
 
 Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=NULL){
@@ -131,13 +190,70 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
 
     for (i in 1:(M+1)){
       if (i==1){uniform_sizes[i,1]=uniform_models[1,1]
-      random_sizes[i,1]=random_models[1,1]} # we collect probabilities for different model sizes (UNIFORM prior): the case of the model with no regressors
+      random_sizes[i,1]=random_models[1,1]} # we collect probabilities for different model sizes: the case of the model with no regressors
       else{uniform_sizes[i,1]=sum(uniform_models[(ind[i-1]+1):ind[i],1])
       random_sizes[i,1]=sum(random_models[(ind[i-1]+1):ind[i],1])
-      } # we collect probabilities for different model sizes (UNIFORM prior): the case of models with regressors
+      } # we collect probabilities for different model sizes: the case of models with regressors
     }
-
   }
+
+  # TEST CHECKING IF THE USER HAS CHOSEN JUST ONE PRIOR
+  if (dilution==1&Narrative==1){stop("Please choose which diltution prior you want to choose:
+  regular (dilution=1 and Narrative=0) or narrative (dilution=0 and Narrative=1).
+  YOU CANNOT CHOOSE BOTH!")} # test if the user checked only on dilution prior
+
+  # CONDITION for dilution prior
+  if (dilution==1){# beginning of the CONDITION for dilution
+    if (exists("dil.Par",envir=sys.frame(sys.nframe()))==0){dil.Par=0.5} # CONDITION for setting the default value of dil.Par
+    uniform_models<-uniform_models*(dilut^dil.Par) # we add dilution component to uniform prior
+    random_models<-random_models*(dilut^dil.Par)  # we add dilution component to random prior
+  }# THE END of the CONDITION for dilution
+
+  # CONDITION for NARRATIVE dilution prior
+  if (Narrative==1){# beginning of the CONDITION for NARRATIVE dilution
+    if (exists("p",envir=sys.frame(sys.nframe()))==0){p=0.5} # CONDITION for setting the default value of p
+    if (is.null(Nar_vec)){stop("Please provide a vector with NARRATIVE INFORMATION through parameter Nar_vec")} # CONDITION for providing Nar_vec with NARRATIVE INFORMATION
+    if (length(Nar_vec)!=K){stop("Nar_vec is missspecified: Nar_vec should have K elements")}
+
+    modelsN<-as.matrix(ols_results[,1:M]) # matrix with regressors used in different models
+    vecID<-as.matrix(1:K) # matrix with IDs of the regressors
+    NarSpace<-matrix(0,nrow=MS,ncol=M) # matrix to store values from Narrative vector
+
+    for (i in 1:MS){ # at this LOOP we go trough all the models
+      for (j in 1:M){ # at this LOOP we go trough all the regressors location in modelsN
+        for (k in 1:K){ # at this LOOP we go trough all the indices from vecID
+          if (modelsN[i,j]==vecID[k,1]){ # CONDITION for finding matches between regressors in model ms and Narrative vector IDs
+            NarSpace[i,j]=Nar_vec[k,1] # we insert the value from Narrative vector associated with model i
+          }# the end of the CONDITION for finding matches between regressors in model ms and Narrative vector IDs
+        }# the end of the LOOP at which we go trough all the indices from vecID
+      }# the end of the LOOP at which we go trough all the regressors location in modelsN
+    } # the end of the LOOP at which we go trough all the models
+
+    NarDilution<-matrix(1,MS,1) # matrix to store Narrative dilution priors
+
+    for (i in 1:MS){ # at this LOOP we go trough all the models
+      NarTable_prep<-table(NarSpace[i,]) # we check frequencies of appearance of different values
+      names<-as.numeric(names(NarTable_prep)) # we interpret values as numbers and extract them
+      frequencies<-as.numeric(NarTable_prep) # we extract the frequencies
+      NarTable<-matrix(c(names,frequencies),nrow=2,byrow=TRUE) # we create a matrix with values and frequencies
+      if (NarTable[1,1]==0&ncol(NarTable)>1){ # CONDITION for finding values equal to 0 in tables with more than one column
+        NarTable<-as.matrix(NarTable[,-1]) # elimination of a column associated with 0
+        Z<-ncol(NarTable) # we check the new number of columns in NarTable
+        for (m in 1:Z){ # at this LOOP we go through all the columns
+          NarDilution[i,1]=NarDilution[i,1]*p^(NarTable[2,m]-1) # calculation of the dilution
+        } # the end of the LOOP at which we go through all the columns
+      }else if (NarTable[1,1]!=0){ # CONDITION for finding tables with no zero values
+        Z<-ncol(NarTable) # we check the new number of columns in NarTable
+        for (m in 1:Z){ # at this LOOP we go through all the columns
+          NarDilution[i,1]=NarDilution[i,1]*p^(NarTable[2,m]-1) # calculation of the dilution
+        } # the end of the LOOP at which we go through all the columns
+      } # the end of the CONDITION  for finding values equal to 0 in tables
+    } # the end of the LOOP at which we go trough all the models
+
+    uniform_models<-uniform_models*NarDilution # we add NARRATIVE diltuion component to uniform prior
+    random_models<-random_models*NarDilution  # we add NARRATIVE diltuion component to random prior
+
+  }# THE END of the CONDITION for NARRATIVE dilution
 
   # Posterior model probabilities (PMP) and R^2 weights of individual models
   PMP_uniform<-as.matrix((uniform_models*Like)/sum(uniform_models*Like)) # calculation of PMPs based on uniform prior
@@ -284,7 +400,6 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   } # end of the LOOP where we calculate upper and lower bounds
 
   # Calculation of the posterior objects (PIP, PM, and PSD) for the constant
-
   const_betas_PMP_uniform<-PMP_uniform*betas[,1] # we create a vector of products of constants and PMP_uniform
   const_betas_R2_uniform<-PMP_R2_uniform*betas[,1] # we create a vector of products of constants and R2_uniform
   const_betas_PMP_random<-PMP_random*betas[,1] # we create a vector of products of constants and PMP_random
@@ -419,8 +534,13 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   sizePriors<-cbind(uniform_sizes,random_sizes)# Table with unifrom and random model priors spread over model sizes
   modelPosterior<-cbind(PMP_uniform,PMP_random,PMP_R2_uniform,PMP_R2_random)# Table with posterior model probabilities
   # creation of the list of Posterior objects (Post objects)
+
   out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
             x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior) # we create a Posterior object (Post object) - a list with:
+
+  if (Narrative==1){
+    out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
+              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,NarDilution)}
 
   # WE NEED TO ADD Nar_vec AT THE END OF THE LIST
 
