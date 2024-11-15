@@ -16,6 +16,7 @@ test_that("Jointness builds correct JointnessTable object (1)", {
   expect_equal(nrow(JointnessTable),Post[[8]])
   expect_equal(ncol(JointnessTable),Post[[8]])
   expect_equal(sum(abs(JointnessTable))<Post[[8]]^2,TRUE)
+  expect_equal(max(JointnessTable)<=1,min(JointnessTable)>=-1)
 })
 
 test_that("Jointness builds correct JointnessTable object (2)", {
@@ -74,4 +75,27 @@ test_that("Jointness builds correct JointnessTable object (4)", {
   JointnessTable<-Jointness(Post,above=3,below=4,measure="LS",app=3)
   expect_equal(nrow(JointnessTable),Post[[8]])
   expect_equal(ncol(JointnessTable),Post[[8]])
+})
+
+test_that("Jointness builds correct JointnessTable object (5)", {
+  x1<-rnorm(20, mean = 0, sd = 1)
+  x2<-rnorm(20, mean = 0, sd = 2)
+  x3<-rnorm(20, mean = 0, sd = 3)
+  x4<-rnorm(20, mean = 0, sd = 1)
+  x5<-rnorm(20, mean = 0, sd = 2)
+  x6<-rnorm(20, mean = 0, sd = 4)
+  x7<-0.5*x1+rnorm(20, mean = 0, sd = 1)
+  e<-rnorm(20, mean = 0, sd = 0.5)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6,x7)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6","x7")
+  M<-6
+  mSpace<-modelSpace(data,M)
+  Post<-Posterior(mSpace)
+  JointnessTable<-Jointness(Post,above=1,below=2,measure="HCGHM",rho=0.5,app=3)
+  expect_equal(nrow(JointnessTable),Post[[8]])
+  expect_equal(ncol(JointnessTable),Post[[8]])
+  expect_equal(sum(abs(JointnessTable))<Post[[8]]^2,TRUE)
+  expect_equal(max(JointnessTable)<=1,min(JointnessTable)>=-1)
+  expect_equal(JointnessTable[1,2]>JointnessTable[1,7],JointnessTable[2,1]>JointnessTable[7,1])
 })

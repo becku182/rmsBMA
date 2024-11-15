@@ -1,6 +1,6 @@
 #' Introduction of time and section fixed effects and data standardization.
 #'
-#' If the data is in the panel form we assume it has the following structure\cr
+#' If the data is in the panel form the function assumes it has the following structure\cr
 #' \cr
 #' section_1  year_1   y x1 x2 x3 ....\cr
 #' section_2  year_1   y x1 x2 x3 ....\cr
@@ -29,6 +29,7 @@
 #' @param STD Binary variable: 1 - standardize the data set, 0 - do not standardize the data set. By standardization we mean subracion of amean and division  by standard deviation of each variable.
 #'
 #' @return Formatted data set.
+#'
 #' @export
 #'
 #' @examples
@@ -47,7 +48,7 @@
 
 data_prep <- function(data,FE=0,Time=0,Section=0,Time_FE=0,Section_FE=0,STD=0){# BEGINING OF THE data_prep function
 
-  Var_names <- names(data) # names of the variables
+  Var_names <- colnames(data) # names of the variables
   colnames(data) <- NULL
   data <- as.matrix(data)
 

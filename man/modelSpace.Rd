@@ -7,7 +7,7 @@
 modelSpace(data, M)
 }
 \arguments{
-\item{data}{Data set to work with.}
+\item{data}{Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.}
 
 \item{M}{Maximum number of regressor in the estimated models.}
 }

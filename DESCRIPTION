@@ -4,7 +4,7 @@ Version: 0.0.0.9000
 Authors@R: 
     person("Krzysztof", "Beck", , "beckkrzysztof@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-3679-2962"))
-Description: Package for Bayesian model averaging in the circumsence when the number of regressors is vastly higher than the number of observations.
+Description: Package for Bayesian model averaging in the circumsence when the number of regressors is higher than the number of observations.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -13,8 +13,12 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports: 
+    ggplot2,
+    ggpubr,
+    grid,
     gridExtra,
     knitr,
     Matrix,
     stats,
+    tidyr,
     utils

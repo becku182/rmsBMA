@@ -2,7 +2,7 @@
 #'
 #'This function calculates all possible models with M regressors that can be constructed out of K regressors. The main object of this function (ols_results) is a table with ols objects for all the estimated models.
 #'
-#' @param data Data set to work with.
+#' @param data Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.
 #' @param M Maximum number of regressor in the estimated models.
 #'
 #' @return A list with modelSpace objects: \cr

@@ -25,7 +25,8 @@
 #' 12. forBestModels - table with model IDs, PMPs, coefficients, variances, degrees of freedom, and R^2 for bestModels function \cr
 #' 13. sizePriors - table with uniform and random model priors spread over model sizes for modelSizes function \cr
 #' 14. modelPosterior - table with posterior model probabilities for modelSizes function \cr
-#' 15. NarDilution - vector with factors that multiply model priors obtained from Narrative approach (appears only when parameter Narrative=1)
+#' 15. EMS - expected model size for binomial and binomial=beta model prior specified by the user (default EMS=K/2). Works only if M=K \cr
+#' 16. NarDilution - vector with factors that multiply model priors obtained from Narrative approach (appears only when parameter Narrative=1)
 #'
 #' @export
 #'
@@ -536,14 +537,10 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   # creation of the list of Posterior objects (Post objects)
 
   out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior) # we create a Posterior object (Post object) - a list with:
+            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS)
 
   if (Narrative==1){
     out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,NarDilution)}
-
-  # WE NEED TO ADD Nar_vec AT THE END OF THE LIST
-
+              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,NarDilution)}
   return(out)
-
-}# THE END of the Posterior FUNCTION
+}

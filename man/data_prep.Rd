@@ -33,7 +33,7 @@ data_prep(
 Formatted data set.
 }
 \description{
-If the data is in the panel form we assume it has the following structure\cr
+If the data is in the panel form the function assumes it has the following structure\cr
 \cr
 section_1  year_1   y x1 x2 x3 ....\cr
 section_2  year_1   y x1 x2 x3 ....\cr
