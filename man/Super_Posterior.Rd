@@ -68,6 +68,7 @@ A list with Posterior objects: \cr
 \item sizePriors - table with uniform and random model priors spread over model sizes for modelSizes function \cr
 \item modelPosterior - table with posterior model probabilities for modelSizes function \cr
 \item EMS - expected model size for binomial and binomial=beta model prior specified by the user (default EMS=K/2). Works only if M=K \cr
+\item beta_k - table with coefficients from all the estimated models \cr
 \item NarDilution - vector with factors that multiply model priors obtained from Narrative approach (appears only when parameter Narrative=1)
 }
 }

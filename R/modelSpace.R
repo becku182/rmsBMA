@@ -3,7 +3,7 @@
 #'This function calculates all possible models with M regressors that can be constructed out of K regressors. The main object of this function (ols_results) is a table with ols objects for all the estimated models.
 #'
 #' @param data Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.
-#' @param M Maximum number of regressor in the estimated models.
+#' @param M Maximum number of regressor in the estimated models (default is K - total number of regressors).
 #'
 #' @return A list with modelSpace objects: \cr
 #' 1. x_names - vector with names of the regressors \cr
@@ -42,11 +42,14 @@
 #' modelSpace(data,M=8)
 #'
 
-modelSpace=function(data,M){
+modelSpace=function(data,M=NULL){
   # collecting data characteristics
   m<-nrow(data) # number of rows in the data
   n<-ncol(data) # number of columns in the data
   K<-n-1 # number of regressors
+
+  # What to do if M is not set by the user
+  if (is.null(M)){M<-K}
 
   # collecting names of the used variables
   Var_names<-colnames(data) # names of the variables

@@ -47,6 +47,7 @@
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6)
 #' modelS<-modelSpace(data,M=3)
 #' Post<-Posterior(modelS)
+#'JointnessTable<-Jointness(Post,above=1,below=2,measure="HCGHM",rho=0.5,app=3)
 #'
 #' x1<-rnorm(20, mean = 0, sd = 1)
 #' x2<-rnorm(20, mean = 0, sd = 2)
@@ -63,9 +64,9 @@
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
 #' modelS<-modelSpace(data,M=8)
 #' Posterior(modelS)
+#'JointnessTable<-Jointness(Post,above=1,below=2,measure="PPI",app=3)
 #'
 
-#THE Jointness FUNCTION starts here
 Jointness=function(Post,above=1,below=2,measure="HCGHM",rho=0.5,app=3){
 
   # Extraction of the elements of the mS object

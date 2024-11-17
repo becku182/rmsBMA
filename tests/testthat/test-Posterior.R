@@ -36,6 +36,9 @@ test_that("Posterior builds correct Posterior objects (1)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.numeric(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior builds correct Posterior objects (2)", {
@@ -76,6 +79,9 @@ test_that("Posterior builds correct Posterior objects (2)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior builds correct Posterior objects (3)", {
@@ -116,6 +122,9 @@ test_that("Posterior builds correct Posterior objects (3)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior builds correct Posterior objects (4)", {
@@ -156,6 +165,9 @@ test_that("Posterior builds correct Posterior objects (4)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior with dilution builds correct Posterior objects (1)", {
@@ -196,6 +208,9 @@ test_that("Posterior with dilution builds correct Posterior objects (1)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.numeric(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior with dilution builds correct Posterior objects (2)", {
@@ -236,6 +251,9 @@ test_that("Posterior with dilution builds correct Posterior objects (2)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior with dilution builds correct Posterior objects (3)", {
@@ -276,6 +294,9 @@ test_that("Posterior with dilution builds correct Posterior objects (3)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior with dilution builds correct Posterior objects (4)", {
@@ -316,6 +337,9 @@ test_that("Posterior with dilution builds correct Posterior objects (4)", {
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
 })
 
 test_that("Posterior with Narrative dilution builds correct Posterior objects (1)", {
@@ -357,8 +381,11 @@ test_that("Posterior with Narrative dilution builds correct Posterior objects (1
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
-  expect_equal(ncol(Post[[15]]),1)
-  expect_equal(nrow(Post[[15]]),mSpace[[3]])
+  expect_equal(is.numeric(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
+  expect_equal(ncol(Post[[17]]),1)
+  expect_equal(nrow(Post[[17]]),mSpace[[3]])
 })
 
 test_that("Posterior with Narrative dilution builds correct Posterior objects (2)", {
@@ -400,8 +427,11 @@ test_that("Posterior with Narrative dilution builds correct Posterior objects (2
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
-  expect_equal(ncol(Post[[15]]),1)
-  expect_equal(nrow(Post[[15]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
+  expect_equal(ncol(Post[[17]]),1)
+  expect_equal(nrow(Post[[17]]),mSpace[[3]])
 })
 
 test_that("Posterior with Narrative dilution builds correct Posterior objects (3)", {
@@ -443,8 +473,11 @@ test_that("Posterior with Narrative dilution builds correct Posterior objects (3
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
-  expect_equal(ncol(Post[[15]]),1)
-  expect_equal(nrow(Post[[15]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
+  expect_equal(ncol(Post[[17]]),1)
+  expect_equal(nrow(Post[[17]]),mSpace[[3]])
 })
 
 test_that("Posterior with Narrative dilution builds correct Posterior objects (4)", {
@@ -486,6 +519,9 @@ test_that("Posterior with Narrative dilution builds correct Posterior objects (4
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
-  expect_equal(ncol(Post[[15]]),1)
-  expect_equal(nrow(Post[[15]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(nrow(Post[[16]]),mSpace[[3]])
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
+  expect_equal(ncol(Post[[17]]),1)
+  expect_equal(nrow(Post[[17]]),mSpace[[3]])
 })
