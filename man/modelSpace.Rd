@@ -4,12 +4,12 @@
 \alias{modelSpace}
 \title{Calculation of the model space}
 \usage{
-modelSpace(data, M)
+modelSpace(data, M = NULL)
 }
 \arguments{
 \item{data}{Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.}
 
-\item{M}{Maximum number of regressor in the estimated models.}
+\item{M}{Maximum number of regressor in the estimated models (default is K - total number of regressors).}
 }
 \value{
 A list with modelSpace objects: \cr

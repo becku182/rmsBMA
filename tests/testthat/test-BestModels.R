@@ -9,7 +9,7 @@ test_that("BestModels builds correct BestModel (BS) objects (1)", {
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
-  M<-6
+  M<-5
   mSpace<-modelSpace(data,M)
   Post<-Posterior(mSpace)
   bestModels<-BestModels(Post,criterion=1,best=5,estimate=TRUE,showConst=TRUE)
@@ -109,7 +109,7 @@ test_that("BestModels builds correct BestModel (BS) objects (5)", {
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
-  M<-6
+  M<-5
   mSpace<-modelSpace(data,M)
   Post<-Posterior(mSpace,dilution=1,dil.Par=0.5)
   bestModels<-BestModels(Post,criterion=1,best=5,estimate=FALSE,showConst=TRUE)
@@ -209,7 +209,7 @@ test_that("BestModels builds correct BestModel (BS) objects (9)", {
   y<-2+x1+2*x2+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
-  M<-6
+  M<-5
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
   Post<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
