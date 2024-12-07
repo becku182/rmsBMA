@@ -252,10 +252,14 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
       } # the end of the CONDITION  for finding values equal to 0 in tables
     } # the end of the LOOP at which we go trough all the models
 
-    uniform_models<-uniform_models*NarDilution # we add NARRATIVE diltuion component to uniform prior
-    random_models<-random_models*NarDilution  # we add NARRATIVE diltuion component to random prior
+    uniform_models<-uniform_models*NarDilution # we add NARRATIVE dilution component to uniform prior
+    random_models<-random_models*NarDilution  # we add NARRATIVE dilution component to random prior
 
   }# THE END of the CONDITION for NARRATIVE dilution
+
+  modelPriors<-cbind(uniform_models,random_models) # we build a table with model priors
+
+  ### HERE WE NEED TO PUT CORRECTION FOR MODELS WITH LARGE "m"
 
   # Posterior model probabilities (PMP) and R^2 weights of individual models
   PMP_uniform<-as.matrix((uniform_models*Like)/sum(uniform_models*Like)) # calculation of PMPs based on uniform prior
@@ -538,10 +542,10 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   # creation of the list of Posterior objects (Post objects)
 
   out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k)
+            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k,modelPriors)
 
   if (Narrative==1){
     out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k,NarDilution)}
+              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k,modelPriors,NarDilution)}
   return(out)
 }

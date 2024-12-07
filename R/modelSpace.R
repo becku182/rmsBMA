@@ -57,7 +57,7 @@ modelSpace=function(data,M=NULL){
 
   if (M>K){# CONDITION about what to do if the user set M that is higher than K (M>K)
     # we tell the user that we are setting M=K
-    message("M>K - maximum number of regressors cannot be bigger than total number of regressors. We set M=K and continiue :)")
+    message("M>K - maximum number of regressors cannot be bigger than total number of regressors. We set M=K (total number of regressors) and continiue :)")
     M=K # we set M=K
   }# end of the CONDITION about what to do if the user set M that is higher than K (M>K)
 
