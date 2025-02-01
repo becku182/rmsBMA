@@ -61,20 +61,8 @@ coefHist=function(Post,BW="FD",binW=NULL,BN=0,num=NULL,kernel=0){
   x_names<-x_names[-1]
   K<-Post[[8]] # number of regressors
   MS<-Post[[9]] # total number of models
-  beta_k<-Post[[16]] # tables with coefficients on all regressors for all the models
+  betas<-Post[[16]] # tables with coefficients on all regressors for all the models
 
-  betas<-matrix(0,nrow=(MS/2),ncol=K) # matrix to store all the coefficients on all the regressors
-
-  # At this LOOP we collect all the point estimates on all regressors into one table (betas)
-  for (j in 1:K){
-    t=1
-    for (i in 1:MS){
-      if (beta_k[i,j]!=0){
-        betas[t,j]=beta_k[i,j]
-        t<-t+1
-      }
-    }
-  }
 
   # Adding colnames and changing to dataframe
   colnames(betas)<-x_names

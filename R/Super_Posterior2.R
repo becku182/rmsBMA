@@ -1,6 +1,6 @@
 #' Calculation of of the posterior objects
 #'
-#' This function calculates posterior objects for the data set. \cr
+#' This function calculates posterior objects for the data set. This variant should be used in the case of having large number of observations, where there exist a risk of marginal likelihoods being equal to zero by approximation.\cr
 #' If the data is in the panel form the function assumes it has the following structure\cr
 #' \cr
 #' section_1  year_1   y x1 x2 x3 ....\cr
@@ -34,7 +34,11 @@
 #' @param Section The number of cross-sections - works only if EF=1.
 #' @param Time_FE Binary variable: 1 - include time fixed effect, 0 - do not include time fixed effects. Works only if EF=1.
 #' @param Section_FE Binary variable: 1 - include cross-section fixed effect, 0 - do not include cross-section fixed effects. Works only if EF=1.
-#' @param STD Binary variable: 1 - standardize the data set, 0 - do not standardize the data set. By standardization we mean subracion of amean and division  by standard deviation of each variable.
+#' @param STD Binary variable: 1 - standardize the data set, 0 - do not standardize the data set. By standardization we mean subtraction of a mean and division  by standard deviation of each variable.
+#' @param Share Variable between 0 and 1 indicating required share of the marginal likelihoods with nonzero values (used only if marginal likelihoods take values are approximately equal to zero).
+#' @param First_norm Step down in finding marginal likelihood (used only if marginal likelihoods take values approximately equal to zero).
+#' @param Second_norm Step up in finding marginal likelihood (used only if marginal likelihoods take values approximately equal to zero).
+#' @param conv_max Number of iteration to find normalizing constant (used only if marginal likelihoods take values approximately equal to zero).
 #'
 #' @return A list with Posterior objects: \cr
 #' 1. PMP_uniform_table - table with results with PMP under binomial model prior \cr
@@ -68,7 +72,7 @@
 #' y<-2+x1+2*x2+e
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6)
 #' M<-3
-#' Super_Posterior(data,M)
+#' Super_Posterior2(data,M)
 #'
 #' x1<-rnorm(20, mean = 0, sd = 1)
 #' x2<-rnorm(20, mean = 0, sd = 2)
@@ -84,7 +88,7 @@
 #' y<-2+x3+2*x5+e
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
 #' M<-8
-#' Super_Posterior(data,M)
+#' Super_Posterior2(data,M)
 #'
 #' x1<-rnorm(20, mean = 0, sd = 1)
 #' x2<-rnorm(20, mean = 0, sd = 2)
@@ -97,7 +101,7 @@
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6)
 #' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
 #' M<-6
-#' Super_Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+#' Super_Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
 #'
 #' x1<-rnorm(50, mean = 0, sd = 5)
 #' x2<-rnorm(50, mean = 0, sd = 2)
@@ -110,7 +114,7 @@
 #' data<-cbind(y,x1,x2,x3,x4,x5,x6)
 #' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
 #' M<-5
-#' Super_Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+#' Super_Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
 #'
 #' x1<-rnorm(20, mean = 0, sd = 1)
 #' x2<-rnorm(20, mean = 0, sd = 2)
@@ -124,7 +128,7 @@
 #' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
 #' M<-6
 #' Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-#' Super_Post<-Super_Posterior(data,M,Narrative=0,p=0.5,Nar_vec=Nar_vec)
+#' Super_Post<-Super_Posterior2(data,M,Narrative=0,p=0.5,Nar_vec=Nar_vec)
 #'
 #' x1<-rnorm(50, mean = 0, sd = 5)
 #' x2<-rnorm(50, mean = 0, sd = 2)
@@ -138,10 +142,10 @@
 #' colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
 #' M<-5
 #' Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-#' Super_Post<-Super_Posterior(data,M,Narrative=0,p=0.5,Nar_vec=Nar_vec)
+#' Super_Post<-Super_Posterior2(data,M,Narrative=0,p=0.5,Nar_vec=Nar_vec)
 #'
 
-Super_Posterior=function(data,M=NULL,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=NULL,FE=0,Time=0,Section=0,Time_FE=0,Section_FE=0,STD=0){
+Super_Posterior2=function(data,M=NULL,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,Nar_vec=NULL,FE=0,Time=0,Section=0,Time_FE=0,Section_FE=0,STD=0,Share=0.6,First_norm=0.75,Second_norm=2.5,conv_max=500){
 
   # data_prep
   data<-data_prep(data,FE=FE,Time=Time,Section=Section,Time_FE=Time_FE,Section_FE=Section_FE,STD=STD)
@@ -149,15 +153,43 @@ Super_Posterior=function(data,M=NULL,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0
   # ModelSpace function
   modelSpace<-modelSpace(data,M)
 
-  # Test for the problem with marginal likelihoods
+  # Here we introduce normalizing constant in the circumstance when marginal likelihood is approximated to zero
   ols_results<-modelSpace[[2]]
+  ms<-modelSpace[[3]]
   M<-modelSpace[[4]]
   Like<-ols_results[,3*M+3]
+  Check1<-sum(Like!=0)
 
-  if (sum(Like==0)!=0){stop("There is a problem with marginal likelihoods - use Super_Posterior2")}
+ if(Check1<(ms*Share)){
+    # Are any likelihoods equal to zero? 1 - No, 0 - Yes.
+    Check2<-0
+    # Are any likelihoods equal to Inf? 1 -No, 0 - Yes.
+    Check3<-0
+    Norm<-1
+    conv<-0
+    Norm_vector<-matrix(0,nrow=conv_max,ncol=1)
+    while ((Check2==0|Check3==0)&(conv<conv_max)){
+      if (Check2==1){Norm<-Second_norm*Norm}
+      if (Check3==1){Norm<-First_norm*Norm}
+      modelSpace<-modelSpace(data,M=M,Norm=Norm)
+      New_ols_results<-modelSpace[[2]]
+      Like2<-New_ols_results[,3*M+3]
+      SumLikes<-sum(Like2!=0)
+      if (any(is.infinite(Like2))==0){Check3<-1}else{Check3<-0}
+      if ((ms*Share)>sum(SumLikes)){Check2<-0}else{Check2<-1}
+      conv<-conv+1
+    }
+    if (Check2==0&Check3==0) {
+      stop("There are marginal likelihoods equal to zero and to infinity. Change normalization parameters: Share, First_norm, Second_norm, and/or conv_max.")
+    }else if(Check2==1&Check3==0){
+      stop("There are marginal likelihoods equal to infinity. Change normalization parameters: Share, First_norm, Second_norm, and/or conv_max.")
+    }else if(Check2==0&Check3==1){
+      stop("There are marginal likelihoods equal to zero. Change normalization parameters: Share, First_norm, Second_norm, and/or conv_max.")
+    }
+ }
 
   # Posterior function
   Post<-Posterior(modelSpace,EMS=EMS,dilution=dilution,dil.Par=dil.Par,Narrative=Narrative,p=p,Nar_vec=Nar_vec)
 
   return(Post)
-}# THE END of the Super_Posterior FUNCTION
+}# THE END of the Super_Posterior2 FUNCTION

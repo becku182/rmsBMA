@@ -4,13 +4,15 @@
 #'
 #' @param data Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.
 #' @param M Maximum number of regressor in the estimated models (default is K - total number of regressors).
+#' @param Norm A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.
 #'
 #' @return A list with modelSpace objects: \cr
 #' 1. x_names - vector with names of the regressors \cr
 #' 2. ols_results - table with the model space - contains ols objects for all the estimated models\cr
 #' 3. ms - size of the mode space (the number of the last estimated model) \cr
 #' 4. M - maximum number of regressors in a model \cr
-#' 5. K- total number of regressors
+#' 5. K- total number of regressors \cr
+#' 6. Norm - value of the nomalizing constant used in the calculation of the marginal likelihood
 #'
 #' @export
 #'
@@ -42,7 +44,7 @@
 #' modelSpace(data,M=8)
 #'
 
-modelSpace=function(data,M=NULL){
+modelSpace=function(data,M=NULL,Norm=NULL){
   # collecting data characteristics
   m<-nrow(data) # number of rows in the data
   n<-ncol(data) # number of columns in the data
@@ -79,7 +81,7 @@ modelSpace=function(data,M=NULL){
   for (k in 0:M){ # at this LOOP we create all possible model sizes
     c=choose(K,k) # number of models of the size k out of K regressors
     if (k==0){ # CONDITION for the special case of a model with no variables and a constant
-      ols1_model<-ols(y=y,x=0,const=1) # estimation of the model with a constant and no regressors
+      ols1_model<-ols(y=y,x=0,const=1,Norm) # estimation of the model with a constant and no regressors
       ms=ms+1 #we change the number of the model
       ols_results[ms,M+1]=as.numeric(ols1_model[1]) # extraction of the coefficients
       ols_results[ms,2*M+2]=as.numeric(ols1_model[2]) # extraction of the standard errors
@@ -101,7 +103,7 @@ modelSpace=function(data,M=NULL){
         } # end of the LOOP that collects the regressors for the model t
         x_ms<-x_ms[,-1] # we delete an artificial vector from the regressor matrix
         ms=ms+1 # we update the index of the model
-        model_ms<-ols(y,x_ms,const=1) #estimation of the model ms
+        model_ms<-ols(y,x_ms,const=1,Norm=Norm) #estimation of the model ms
         ols_results[ms,3*M+3]=as.numeric(model_ms[3]) #here we extract value of the Likelihood function
         ols_results[ms,3*M+4]=as.numeric(model_ms[4]) #here we extract R2
         ols_results[ms,3*M+5]=as.numeric(model_ms[5]) #here we extract the number of degrees of freedom
@@ -129,6 +131,6 @@ modelSpace=function(data,M=NULL){
   ols_names<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
   colnames(ols_results)<-cbind(reg_presence,Betas,SEs,matrix(c("like","R^2","DF","Dilut"),nrow=1,ncol=4))
 
-  out<-list(x_names,ols_results,ms,M,K) # we create a modelSpace object (mS object)
+  out<-list(x_names,ols_results,ms,M,K,Norm) # we create a modelSpace object (mS object)
   return(out)
 }

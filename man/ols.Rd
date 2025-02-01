@@ -4,7 +4,7 @@
 \alias{ols}
 \title{OLS calculation with additional objects}
 \usage{
-ols(y, x, const)
+ols(y, x, const, Norm = NULL)
 }
 \arguments{
 \item{y}{A vector with the dependent variable.}
@@ -12,6 +12,8 @@ ols(y, x, const)
 \item{x}{A matrix with with regressors as columns or 0 for model without any regressors.}
 
 \item{const}{Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.}
+
+\item{Norm}{A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.}
 }
 \value{
 A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix, log(Marginal likelihood).

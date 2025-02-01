@@ -1,4 +1,4 @@
-test_that("Super_Posterior builds correct Posterior objects (1)", {
+test_that("Super_Posterior2 builds correct Posterior objects (1)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -11,7 +11,7 @@ test_that("Super_Posterior builds correct Posterior objects (1)", {
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-6
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M)
+  Post<-Super_Posterior2(data,M)
   Post2<-Posterior(mSpace)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -44,7 +44,7 @@ test_that("Super_Posterior builds correct Posterior objects (1)", {
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior builds correct Posterior objects (2)", {
+test_that("Super_Posterior2 builds correct Posterior objects (2)", {
   x1<-rnorm(50, mean = 0, sd = 5)
   x2<-rnorm(50, mean = 0, sd = 2)
   x3<-rnorm(50, mean = 0, sd = 7)
@@ -57,7 +57,7 @@ test_that("Super_Posterior builds correct Posterior objects (2)", {
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-5
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M)
+  Post<-Super_Posterior2(data,M)
   Post2<-Posterior(mSpace)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -90,7 +90,7 @@ test_that("Super_Posterior builds correct Posterior objects (2)", {
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior builds correct Posterior objects (3)", {
+test_that("Super_Posterior2 builds correct Posterior objects (3)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -103,7 +103,7 @@ test_that("Super_Posterior builds correct Posterior objects (3)", {
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-4
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M)
+  Post<-Super_Posterior2(data,M)
   Post2<-Posterior(mSpace)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -136,7 +136,7 @@ test_that("Super_Posterior builds correct Posterior objects (3)", {
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior builds correct Posterior objects (4)", {
+test_that("Super_Posterior2 builds correct Posterior objects (4)", {
   x1<-rnorm(100, mean = 0, sd = 5)
   x2<-rnorm(100, mean = 0, sd = 3)
   x3<-rnorm(100, mean = 0, sd = 7)
@@ -149,7 +149,7 @@ test_that("Super_Posterior builds correct Posterior objects (4)", {
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-3
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M)
+  Post<-Super_Posterior2(data,M)
   Post2<-Posterior(mSpace)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -182,7 +182,7 @@ test_that("Super_Posterior builds correct Posterior objects (4)", {
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with dilution builds correct Posterior objects (1)", {
+test_that("Super_Posterior2 with dilution builds correct Posterior objects (1)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -195,7 +195,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (1)", 
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-6
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+  Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
   Post2<-Posterior(mSpace,dilution=1,dil.Par=0.5)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -228,7 +228,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (1)", 
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with dilution builds correct Posterior objects (2)", {
+test_that("Super_Posterior2 with dilution builds correct Posterior objects (2)", {
   x1<-rnorm(50, mean = 0, sd = 5)
   x2<-rnorm(50, mean = 0, sd = 2)
   x3<-rnorm(50, mean = 0, sd = 7)
@@ -241,7 +241,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (2)", 
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-5
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+  Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
   Post2<-Posterior(mSpace,dilution=1,dil.Par=0.5)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -274,7 +274,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (2)", 
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with dilution builds correct Posterior objects (3)", {
+test_that("Super_Posterior2 with dilution builds correct Posterior objects (3)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -287,7 +287,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (3)", 
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-4
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+  Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
   Post2<-Posterior(mSpace,dilution=1,dil.Par=0.5)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -320,7 +320,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (3)", 
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with dilution builds correct Posterior objects (4)", {
+test_that("Super_Posterior2 with dilution builds correct Posterior objects (4)", {
   x1<-rnorm(100, mean = 0, sd = 5)
   x2<-rnorm(100, mean = 0, sd = 3)
   x3<-rnorm(100, mean = 0, sd = 7)
@@ -333,7 +333,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (4)", 
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
   M<-3
   mSpace<-modelSpace(data,M)
-  Post<-Super_Posterior(data,M,dilution=1,dil.Par=0.5)
+  Post<-Super_Posterior2(data,M,dilution=1,dil.Par=0.5)
   Post2<-Posterior(mSpace,dilution=1,dil.Par=0.5)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -366,7 +366,7 @@ test_that("Super_Posterior with dilution builds correct Posterior objects (4)", 
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with Narrative dilution builds correct Posterior objects (1)", {
+test_that("Super_Posterior2 with Narrative dilution builds correct Posterior objects (1)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -380,7 +380,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   M<-6
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -416,7 +416,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
 })
 
 
-test_that("Super_Posterior with Narrative dilution builds correct Posterior objects (2)", {
+test_that("Super_Posterior2 with Narrative dilution builds correct Posterior objects (2)", {
   x1<-rnorm(50, mean = 0, sd = 5)
   x2<-rnorm(50, mean = 0, sd = 2)
   x3<-rnorm(50, mean = 0, sd = 7)
@@ -430,7 +430,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   M<-5
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -465,7 +465,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with Narrative dilution builds correct Posterior objects (3)", {
+test_that("Super_Posterior2 with Narrative dilution builds correct Posterior objects (3)", {
   x1<-rnorm(20, mean = 0, sd = 1)
   x2<-rnorm(20, mean = 0, sd = 2)
   x3<-rnorm(20, mean = 0, sd = 3)
@@ -479,7 +479,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   M<-4
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -514,7 +514,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with Narrative dilution builds correct Posterior objects (4)", {
+test_that("Super_Posterior2 with Narrative dilution builds correct Posterior objects (4)", {
   x1<-rnorm(100, mean = 0, sd = 5)
   x2<-rnorm(100, mean = 0, sd = 3)
   x3<-rnorm(100, mean = 0, sd = 7)
@@ -528,7 +528,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   M<-3
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -563,7 +563,7 @@ test_that("Super_Posterior with Narrative dilution builds correct Posterior obje
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with Narrative dilution and fixed effects builds correct Posterior objects", {
+test_that("Super_Posterior2 with Narrative dilution and fixed effects builds correct Posterior objects", {
   x1<-rnorm(100, mean = 0, sd = 5)
   x2<-rnorm(100, mean = 0, sd = 3)
   x3<-rnorm(100, mean = 0, sd = 7)
@@ -578,7 +578,56 @@ test_that("Super_Posterior with Narrative dilution and fixed effects builds corr
   data<-data_prep(data,FE=1,Time=10,Section=10,Time_FE=1,Section_FE=1)
   mSpace<-modelSpace(data,M)
   Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec,FE=1,Time=10,Section=10,Time_FE=1,Section_FE=1)
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec,FE=1,Time=10,Section=10,Time_FE=1,Section_FE=1)
+  Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  expect_equal(ncol(Post[[1]]),5)
+  expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
+  expect_equal(ncol(Post[[2]]),5)
+  expect_equal(nrow(Post[[2]]),mSpace[[5]]+1)
+  expect_equal(ncol(Post[[3]]),6)
+  expect_equal(nrow(Post[[3]]),mSpace[[5]]+1)
+  expect_equal(ncol(Post[[4]]),5)
+  expect_equal(nrow(Post[[4]]),mSpace[[5]]+1)
+  expect_equal(ncol(Post[[5]]),5)
+  expect_equal(nrow(Post[[5]]),mSpace[[5]]+1)
+  expect_equal(matrix(Post[[6]],nrow=1,ncol=mSpace[[5]]+1)[1,2:(mSpace[[5]]+1)],mSpace[[1]])
+  expect_equal(Post[[7]],mSpace[[4]])
+  expect_equal(Post[[8]],mSpace[[5]])
+  expect_equal(Post[[9]],mSpace[[3]])
+  expect_equal(ncol(Post[[10]]),4)
+  expect_equal(nrow(Post[[10]]),mSpace[[5]]+1)
+  expect_equal(ncol(Post[[11]]),mSpace[[4]]+4)
+  expect_equal(nrow(Post[[11]]),mSpace[[3]])
+  expect_equal(ncol(Post[[12]]),3*mSpace[[4]]+8)
+  expect_equal(nrow(Post[[12]]),mSpace[[3]])
+  expect_equal(ncol(Post[[13]]),2)
+  expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
+  expect_equal(ncol(Post[[14]]),4)
+  expect_equal(nrow(Post[[14]]),mSpace[[3]])
+  expect_equal(is.null(Post[[15]]),TRUE)
+  expect_equal(ncol(Post[[16]]),mSpace[[5]])
+  expect_equal(nrow(Post[[17]]),mSpace[[3]])
+  expect_equal(ncol(Post[[17]]),2)
+  expect_equal(ncol(Post[[18]]),1)
+  expect_equal(nrow(Post[[18]]),mSpace[[3]])
+})
+
+test_that("Super_Posterior2 with Narrative dilution and standardized data builds correct Posterior objects", {
+  x1<-rnorm(100, mean = 0, sd = 5)
+  x2<-rnorm(100, mean = 0, sd = 3)
+  x3<-rnorm(100, mean = 0, sd = 7)
+  x4<-rnorm(100, mean = 0, sd = 4)
+  x5<-rnorm(100, mean = 0, sd = 3)
+  x6<-rnorm(100, mean = 0, sd = 4)
+  e<-rnorm(100, mean = 0, sd = 4)
+  y<-2+x1+2*x2+e
+  data<-cbind(y,x1,x2,x3,x4,x5,x6)
+  colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
+  M<-3
+  data1<-data_prep(data,STD=1)
+  mSpace<-modelSpace(data1,M)
+  Nar_vec<-as.matrix(c(0,1,1,1,2,2))
+  Post<-Super_Posterior2(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec,STD=1)
   Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
@@ -613,23 +662,21 @@ test_that("Super_Posterior with Narrative dilution and fixed effects builds corr
   expect_equal(Post,Post2)
 })
 
-test_that("Super_Posterior with Narrative dilution and standardized data builds correct Posterior objects", {
-  x1<-rnorm(100, mean = 0, sd = 5)
-  x2<-rnorm(100, mean = 0, sd = 3)
-  x3<-rnorm(100, mean = 0, sd = 7)
-  x4<-rnorm(100, mean = 0, sd = 4)
-  x5<-rnorm(100, mean = 0, sd = 3)
-  x6<-rnorm(100, mean = 0, sd = 4)
-  e<-rnorm(100, mean = 0, sd = 4)
-  y<-2+x1+2*x2+e
+test_that("Super_Posterior2 introduces appropriate Normalization facotr", {
+  x1<-rnorm(250, mean = 0, sd = 1)
+  x2<-rnorm(250, mean = 0, sd = 2)
+  x3<-rnorm(250, mean = 0, sd = 1)
+  x4<-rnorm(250, mean = 0, sd = 1)
+  x5<-rnorm(250, mean = 0, sd = 2)
+  x6<-rnorm(250, mean = 0, sd = 1)
+  e<-rnorm(250, mean = 0, sd = 0.5)
+  y<-2+x1+2*x2+x3+x4+x5+x6+e
   data<-cbind(y,x1,x2,x3,x4,x5,x6)
   colnames(data)<-c("y","x1","x2","x3","x4","x5","x6")
-  M<-3
-  data1<-data_prep(data,STD=1)
-  mSpace<-modelSpace(data1,M)
-  Nar_vec<-as.matrix(c(0,1,1,1,2,2))
-  Post<-Super_Posterior(data,M,Narrative=1,p=0.5,Nar_vec=Nar_vec,STD=1)
-  Post2<-Posterior(mSpace,Narrative=1,p=0.5,Nar_vec=Nar_vec)
+  M<-5
+  mSpace<-modelSpace(data,M)
+  Post<-Super_Posterior2(data,M,Share=0.5,conv_max=120)
+  Post2<-Posterior(mSpace)
   expect_equal(ncol(Post[[1]]),5)
   expect_equal(nrow(Post[[1]]),mSpace[[5]]+1)
   expect_equal(ncol(Post[[2]]),5)
@@ -640,10 +687,6 @@ test_that("Super_Posterior with Narrative dilution and standardized data builds 
   expect_equal(nrow(Post[[4]]),mSpace[[5]]+1)
   expect_equal(ncol(Post[[5]]),5)
   expect_equal(nrow(Post[[5]]),mSpace[[5]]+1)
-  expect_equal(matrix(Post[[6]],nrow=1,ncol=mSpace[[5]]+1)[1,2:(mSpace[[5]]+1)],mSpace[[1]])
-  expect_equal(Post[[7]],mSpace[[4]])
-  expect_equal(Post[[8]],mSpace[[5]])
-  expect_equal(Post[[9]],mSpace[[3]])
   expect_equal(ncol(Post[[10]]),4)
   expect_equal(nrow(Post[[10]]),mSpace[[5]]+1)
   expect_equal(ncol(Post[[11]]),mSpace[[4]]+4)
@@ -654,11 +697,7 @@ test_that("Super_Posterior with Narrative dilution and standardized data builds 
   expect_equal(nrow(Post[[13]]),mSpace[[4]]+1)
   expect_equal(ncol(Post[[14]]),4)
   expect_equal(nrow(Post[[14]]),mSpace[[3]])
-  expect_equal(is.null(Post[[15]]),TRUE)
   expect_equal(ncol(Post[[16]]),mSpace[[5]])
   expect_equal(nrow(Post[[17]]),mSpace[[3]])
   expect_equal(ncol(Post[[17]]),2)
-  expect_equal(ncol(Post[[18]]),1)
-  expect_equal(nrow(Post[[18]]),mSpace[[3]])
-  expect_equal(Post,Post2)
 })

@@ -1,0 +1,33 @@
+#' Determinants of international trade for the Eurozone countries
+#'
+#' This data set contains measure of international trade and its 17 determinants for 26 European Union countries for
+#' the 1995-2015 period. The list of countries include: Austria, Belgium, Bulgaria, Cyprus, Czechia, Denmark, Estonia, Finland,
+#' France, Germany, Greece, Hungary, Ireland, Italy, Latvia, Lithuania, Luxembourg, the Netherlands, Poland, Portugal,
+#' Romania, Slovakia, Slovenia, Spain, Sweden, and the UK .This gives a total of 325 pairs of trading partners.
+#' For details on the data set see: Beck K (2020) What drives international trade? Robust analysis for the European
+#' Union. Journal of International Studies 13(3), 68-84. doi: 10.14254/2071-8330.2020/13-3/5
+#'
+#' @format ## `Trade_data_325`
+#' A data frame with 325 rows and 18 columns:
+#' \describe{
+#'   \item{LNTRADE}{Natural logarithm of trade between two countries.}
+#'   \item{B}{Border dummy: 1 - if two countries share common border; 0 - otherwise.}
+#'   \item{LNDGEO}{Natural logarrithm of shortest distance between capitals of two countries.}
+#'   \item{L}{Common language dummy: 1 - if two countries share at least one common official language; 0 - otherwise.}
+#'   \item{LNRGDPPROD}{Natural logarrithm of GDP product of two countries.}
+#'   \item{RGDPpcDIFF}{The absolute value of the difference in real GDP per capita.}
+#'   \item{GOV}{The absolute value of the difference of government shares in GDP}
+#'   \item{HUMAN}{The absolute value of the difference in human capital}
+#'   \item{CPW}{The absolute value of the difference in capital per worker}
+#'   \item{INFVAR}{The absolute value of the difference between std of inflation rates in two countries}
+#'   \item{ARABLE}{The absolute value of the difference in arable land}
+#'   \item{ARABLEpw}{The absolute value of the difference in arable land per worker}
+#'   \item{LAND}{The absolute value of the difference in land}
+#'   \item{LANDpc}{The absolute value of the difference in land per capita}
+#'   \item{EPCpc}{The absolute value of the difference in electricity consumption per capita}
+#'   \item{FDI}{ABV of the difference in FDI flows}
+#'   \item{KSI}{Krugman specialization index for value added for 35 sectors}
+#'   \item{BICDIFF}{The absolute value of the difference in Bayesian corruption Index}
+#' }
+#' @source <https://doi.org/10.7910/DVN/JMMOEA>
+"Trade_data_325"

@@ -393,16 +393,32 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   upper<-matrix(0,nrow=K,ncol=1) # matrix to store upper bounds
   lower<-matrix(0,nrow=K,ncol=1) # matrix to store lower bounds
 
+  sum_M<-1
+  k=1
+  while (k<M){
+    sum_M<-sum_M+choose(K-1,k)
+    k<-k+1
+  }
+
+  beta_eba<-matrix(0,nrow=sum_M,ncol=K)
+  se_eba<-matrix(0,nrow=sum_M,ncol=K)
+  for (k in 1:K){
+    temp_beta<-beta_k[,k]
+    temp_se<-se[,k]
+    beta_eba[,k]<-temp_beta[temp_beta!=0]
+    se_eba[,k]<-temp_se[temp_se!=0]
+  }
+
   for (k in 1:K){ # at this LOOP we calculate upper and lower bounds
-    beta_max[k,1]=max(beta_k[,k]) # we find the highest values of the coefficients
-    beta_min[k,1]=min(beta_k[,k]) # we find the lowest values of the coefficients
-    beta_mean[k,1]=mean(beta_k[,k]) # we find mean values of the coefficients
-    u<-which(beta_k[,k]==max(beta_k[,k])) # finding the index of the highest value of the coefficient
+    beta_max[k,1]=max(beta_eba[,k]) # we find the highest values of the coefficients
+    beta_min[k,1]=min(beta_eba[,k]) # we find the lowest values of the coefficients
+    beta_mean[k,1]=mean(beta_eba[,k]) # we find mean values of the coefficients
+    u<-which(beta_eba[,k]==max(beta_eba[,k])) # finding the index of the highest value of the coefficient
     if (length(u)>1){u<-1} # CONDITION TO avoid the problem of repeating values - zeros
-    upper[k,1]<-beta_k[u,k]+2*se[u,k] # calculation of the upper bound
-    l<-which(beta_k[,k]==min(beta_k[,k])) # finding the index of the lowest value of the coefficient
+    upper[k,1]<-beta_eba[u,k]+2*se_eba[u,k] # calculation of the upper bound
+    l<-which(beta_eba[,k]==min(beta_eba[,k])) # finding the index of the lowest value of the coefficient
     if (length(l)>1){l<-1}  # CONDITION TO avoid the problem of repeating values - zeros
-    lower[k,1]<-beta_k[l,k]-2*se[u,k] # calculation of the lower bound
+    lower[k,1]<-beta_eba[l,k]-2*se_eba[l,k] # calculation of the lower bound
   } # end of the LOOP where we calculate upper and lower bounds
 
   # Calculation of the posterior objects (PIP, PM, and PSD) for the constant
@@ -542,10 +558,10 @@ Posterior=function(modelSpace,EMS=NULL,dilution=0,dil.Par=0.5,Narrative=0,p=0.5,
   # creation of the list of Posterior objects (Post objects)
 
   out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k,modelPriors)
+            x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_eba,modelPriors)
 
   if (Narrative==1){
     out<-list(PMP_uniform_table,PMP_random_table,EBA,R2_uniform_table,R2_random_table,
-              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_k,modelPriors,NarDilution)}
+              x_names,M,K,MS,PIPs,forJointness,forBestModels,sizePriors,modelPosterior,EMS,beta_eba,modelPriors,NarDilution)}
   return(out)
 }

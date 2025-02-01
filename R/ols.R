@@ -3,6 +3,7 @@
 #' @param y A vector with the dependent variable.
 #' @param x A matrix with with regressors as columns or 0 for model without any regressors.
 #' @param const Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.
+#' @param Norm A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.
 #'
 #' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix, log(Marginal likelihood).
 #' @export
@@ -23,7 +24,7 @@
 #' const<-1
 #' ols(y,x,const)
 #'
-ols<-function(y,x,const){ # function that provides ols estimates and additional statistics
+ols<-function(y,x,const,Norm=NULL){ # function that provides ols estimates and additional statistics
 
   # DATA PREPARATION
   y<-as.matrix(y) # changing vector of dependent variables into a matrix
@@ -68,8 +69,17 @@ ols<-function(y,x,const){ # function that provides ols estimates and additional 
   R2<-1-(SSR/SST) # calculation of R^2
 
   # THERE IS A PROBLEM WITH LIKELIHOOD FUNCTION - NUMBERS TOO CLOSE TO ZERO
-  like<-(m^(-r/2))*(SSR^(-m/2)) # value of the likelihood function (Leamer, 1978)
-  loglike<-(-r/2)*log(m)+(-m/2)*log(SSR) # ln of "like" above
+
+  # When the number of observations is relatively low
+  if (is.null(Norm)==1){
+    like<-(m^(-r/2))*(SSR^(-m/2)) # value of the likelihood function (Leamer, 1978)
+    loglike<-(-r/2)*log(m)+(-m/2)*log(SSR) # ln of "like" above
+  }
+  # When the number of observations is relatively high
+  if (is.null(Norm)==0){
+    like<-(m^(-r/2)*(Norm*SSR)^(-m/2)) # value of the likelihood function with a correcting constant
+    loglike<-(-r/2)*log(m)+(-m/2)*log(Norm*SSR) # ln of "like" above
+  }
 
   # PUTTING ALL THE NECESSARY STUF ONE ONE LIST
   out <- list(betas,se_B,as.numeric(like),as.numeric(R2),as.numeric(df),as.numeric(Diluntion),as.numeric(loglike)) # creates a list of objects needed for modelSpace function

@@ -4,12 +4,14 @@
 \alias{modelSpace}
 \title{Calculation of the model space}
 \usage{
-modelSpace(data, M = NULL)
+modelSpace(data, M = NULL, Norm = NULL)
 }
 \arguments{
 \item{data}{Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.}
 
 \item{M}{Maximum number of regressor in the estimated models (default is K - total number of regressors).}
+
+\item{Norm}{A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.}
 }
 \value{
 A list with modelSpace objects: \cr
@@ -18,7 +20,8 @@ A list with modelSpace objects: \cr
 \item ols_results - table with the model space - contains ols objects for all the estimated models\cr
 \item ms - size of the mode space (the number of the last estimated model) \cr
 \item M - maximum number of regressors in a model \cr
-\item K- total number of regressors
+\item K- total number of regressors \cr
+\item Norm - value of the nomalizing constant used in the calculation of the marginal likelihood
 }
 }
 \description{

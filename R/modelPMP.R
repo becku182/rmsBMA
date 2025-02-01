@@ -141,22 +141,22 @@ modelPMP=function(Post,Top=4){
   Graph1_2<-ggplot2::ggplot(forGraph1, ggplot2::aes(x = ID, y = Value)) +
     ggplot2::geom_line(ggplot2::aes(color = Probability, linetype = Probability)) +
     ggplot2::scale_color_manual(values = c("darkred", "steelblue"))+
-    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the raniking")+ggplot2::ggtitle("Results with binomial model prior")
+    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the ranking")+ggplot2::ggtitle("Results with binomial model prior")
   # for graph with random model prior and likelihood based posterior
   Graph2_2<-ggplot2::ggplot(forGraph2, ggplot2::aes(x = ID, y = Value)) +
     ggplot2::geom_line(ggplot2::aes(color = Probability, linetype = Probability)) +
     ggplot2::scale_color_manual(values = c("darkred", "steelblue"))+
-    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the raniking")+ggplot2::ggtitle("Results with binomial-beta model prior")
+    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the ranking")+ggplot2::ggtitle("Results with binomial-beta model prior")
   # for graph with unifrom model prior and R^2 based posterior
   Graph3_2<-ggplot2::ggplot(forGraph3, ggplot2::aes(x = ID, y = Value)) +
     ggplot2::geom_line(ggplot2::aes(color = Probability, linetype = Probability)) +
     ggplot2::scale_color_manual(values = c("darkred", "steelblue"))+
-    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the raniking")+ggplot2::ggtitle(bquote("Results with bimonial model prior and" ~ R^2))
+    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the ranking")+ggplot2::ggtitle(bquote("Results with bimonial model prior and" ~ R^2))
   # for graph with random model prior and R^2 based posterior
   Graph4_2<-ggplot2::ggplot(forGraph4, ggplot2::aes(x = ID, y = Value)) +
     ggplot2::geom_line(ggplot2::aes(color = Probability, linetype = Probability)) +
     ggplot2::scale_color_manual(values = c("darkred", "steelblue"))+
-    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the raniking")+ggplot2::ggtitle(bquote("Results with binomial-beta model prior and" ~ R^2))
+    ggplot2::ylab("Prior, Posterior") + ggplot2::xlab("Model number in the ranking")+ggplot2::ggtitle(bquote("Results with binomial-beta model prior and" ~ R^2))
 
   # Putting together the last plot
   Finalplot<-ggpubr::ggarrange(Graph1_2,Graph2_2,Graph3_2,Graph4_2,
