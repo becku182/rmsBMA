@@ -1,32 +1,48 @@
-#' Determinants of international trade for the Eurozone countries
+#' Determinants of International Trade in the European Union
 #'
-#' This data set contains measure of international trade and its 17 determinants for 11 Eurozone countries for
-#' the 1995-2015 period. The list of countries include: Austria, Belgium, Finland, France, Germany, Ireland,
-#' Italy, Luxembourg, the Netherlands, Portugal, and Spain.This gives a total of 55 pairs of trading partners.
-#' For details on the data set see: Beck K (2020) What drives international trade? Robust analysis for the European
-#' Union. Journal of International Studies 13(3), 68-84. doi: 10.14254/2071-8330.2020/13-3/5
+#' @description
+#' The dataset contains bilateral trade and its economic determinants
+#' for 26 European Union countries over the period 1995–2015.
+#' Each observation represents a country pair, resulting in 325
+#' unique trading pairs.
 #'
-#' @format ## `Trade_data`
-#' A data frame with 55 rows and 18 columns:
+#' The countries included are: Austria, Belgium, Bulgaria, Cyprus,
+#' Czechia, Denmark, Estonia, Finland, France, Germany, Greece,
+#' Hungary, Ireland, Italy, Latvia, Lithuania, Luxembourg,
+#' the Netherlands, Poland, Portugal, Romania, Slovakia, Slovenia,
+#' Spain, Sweden, and the United Kingdom.
+#'
+#' The dataset was used in:
+#' Beck (2020), *What drives international trade? Robust analysis
+#' for the European Union*, Journal of International Studies,
+#' 13(3), 68–84.
+#'
+#' @format A data frame with 325 rows and 18 variables:
 #' \describe{
-#'   \item{LNTRADE}{Natural logarithm of trade between two countries.}
-#'   \item{LNDGEO}{Natural logarrithm of shortest distance between capitals of two countries.}
-#'   \item{LNRGDPPROD}{Natural logarrithm of GDP product of two countries.}
-#'   \item{B}{Border dummy: 1 - if two countries share common border; 0 - otherwise.}
-#'   \item{L}{Common language dummy: 1 - if two countries share at least one common official language; 0 - otherwise.}
-#'   \item{RGDPpcDIFF}{The absolute value of the difference in real GDP per capita.}
-#'   \item{GOV}{The absolute value of the difference of government shares in GDP}
-#'   \item{HUMAN}{The absolute value of the difference in human capital}
-#'   \item{FDI}{ABV of the difference in FDI flows}
-#'   \item{KSI}{Krugman specialization index for value added for 35 sectors}
-#'   \item{BICDIFF}{The absolute value of the difference in Bayesian corruption Index}
-#'   \item{CPW}{The absolute value of the difference in capital per worker}
-#'   \item{INFVAR}{The absolute value of the difference between std of inflation rates in two countries}
-#'   \item{ARABLE}{The absolute value of the difference in arable land}
-#'   \item{LAND}{The absolute value of the difference in land}
-#'   \item{ARABLEpw}{The absolute value of the difference in arable land per worker}
-#'   \item{LANDpc}{The absolute value of the difference in land per capita}
-#'   \item{EPCpc}{The absolute value of the difference in electricity consumption per capita}
+#'   \item{LNTRADE}{Natural logarithm of bilateral trade between two countries.}
+#'   \item{B}{Border dummy (1 if countries share a common border; 0 otherwise).}
+#'   \item{LNDGEO}{Natural logarithm of the shortest distance between capital cities.}
+#'   \item{L}{Common language dummy (1 if countries share at least one official language; 0 otherwise).}
+#'   \item{LNRGDPPROD}{Natural logarithm of the product of real GDPs of the two countries.}
+#'   \item{RGDPpcDIFF}{Absolute difference in real GDP per capita.}
+#'   \item{GOV}{Absolute difference in government expenditure shares of GDP.}
+#'   \item{HUMAN}{Absolute difference in human capital indicators.}
+#'   \item{CPW}{Absolute difference in capital per worker.}
+#'   \item{INFVAR}{Absolute difference in the standard deviation of inflation rates.}
+#'   \item{ARABLE}{Absolute difference in arable land.}
+#'   \item{ARABLEpw}{Absolute difference in arable land per worker.}
+#'   \item{LAND}{Absolute difference in total land area.}
+#'   \item{LANDpc}{Absolute difference in land area per capita.}
+#'   \item{EPCpc}{Absolute difference in electricity consumption per capita.}
+#'   \item{FDI}{Absolute difference in foreign direct investment flows.}
+#'   \item{KSI}{Krugman specialization index (value added, 35 sectors).}
+#'   \item{BCIDIFF}{Absolute difference in the Bayesian Corruption Index.}
 #' }
-#' @source <https://doi.org/10.7910/DVN/JMMOEA>
+#'
+#' @source
+#' Harvard Dataverse.
+#' \doi{10.7910/DVN/JMMOEA}
+#'
+#' @usage data(Trade_data)
+#'
 "Trade_data"

@@ -6,7 +6,7 @@
 \usage{
 data_prep(
   data,
-  FE = 0,
+  FE = FALSE,
   Time = 0,
   Section = 0,
   Time_FE = 0,
@@ -17,7 +17,7 @@ data_prep(
 \arguments{
 \item{data}{A data file.}
 
-\item{FE}{Binary variable: 1 - include fixed effect, 0 - do not include fixed effects.}
+\item{FE}{Binary variable: TRUE - include fixed effect, FALSE - do not include fixed effects.}
 
 \item{Time}{The number of time periods - works only if FE=1.}
 
