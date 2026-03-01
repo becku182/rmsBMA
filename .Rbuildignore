@@ -6,3 +6,9 @@
 ^README\.md$
 ^CRAN-SUBMISSION$
 ^cran-comments\.md$
+^vignettes/.*\.pdf$
+^vignettes/.*\.log$
+^vignettes/.*\.tex$
+^vignettes/.*\.toc$
+^vignettes/.*\.synctex\.gz$
+^vignettes/Rplots\.pdf$
