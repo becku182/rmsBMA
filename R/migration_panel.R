@@ -1,0 +1,44 @@
+#' Determinants of International Migration in the European Union
+#'
+#' @description
+#' The dataset contains bilateral migration and its economic determinants
+#' for 23 European Union countries over the period 1995–2020.
+#' Each observation represents a country pair in a given 5 year period, resulting in 353
+#' unique country pairs and four periods (the first period is utilized for lagged data only).
+#'
+#' The countries included are: Austria, Belgium, Czechia, Denmark, Estonia, Finland, France,
+#' Germany, Greece, Hungary, Ireland, Italy, Latvia, Lithuania, Luxembourg, Netherlands, Poland,
+#' Portugal, Slovakia, Slovenia, Spain, Sweden and the United Kingdom
+#'
+#' The dataset was used in:
+#' Afonso, Aves, Beck (2025), *Drivers of migration flows in the European Union:
+#' Earnings or unemployment?*, International Labour Review, 164(2), 1-23.
+#' doi: 10.16995/ilr.18845
+#'
+#' @format A data frame with 1012 rows and 14 variables:
+#' \describe{
+#'   \item{Year_0}{Column indication observation period.}
+#'   \item{Pair_ID}{Column indication country pair.}
+#'   \item{Migration}{The absolute value of the net migration flows scaled by the sum of the population of a given pair of countries.}
+#'   \item{MigrationLAG}{The absolute value of the net migration flows scaled by the sum of the population of a given pair of countries lagged by one period (5 years).}
+#'   \item{Unempl}{The absolute value of the difference in unemployment rates, averaged over the 5-year period.}
+#'   \item{Earn}{The absolute value of the difference in net earnings expressed in PPP, averaged over the 5-year period.}
+#'   \item{Tax}{The absolute value of the difference in mean income tax, averaged over the 5-year period.}
+#'   \item{Social}{The absolute value of the difference in mean social benefits per person, averaged over the 5-year period.}
+#'   \item{LNDGEO}{A natural logarithm of the distance between the capital of a given pair of countries based on the shortest route.}
+#'   \item{Temp}{The absolute value of the difference in mean annual temperature, averaged over the 5-year period.}
+#'   \item{HC}{The absolute value of the difference in the human capital index (Barro and Lee 2013), averaged over the 5-year period.}
+#'   \item{GOV}{The absolute value of the difference in government spending share of GDP, averaged over the 5-year period.}
+#'   \item{Gini}{The absolute value of the difference in the Gini coefficient between a pair of countries, averaged over the 5-year period.}
+#'   \item{FER}{The absolute value of the difference in the fertility rate between a pair of countries, averaged over the 5-year period.}
+#'   \item{Corruption}{The absolute difference in the value of control of corruption measure from the Worldwide Governance Indicator, averaged over the 5-year period.}
+#'   \item{Crime}{The absolute value of the difference in the number of intentional homicides per 1 000 inhabitants, averaged over the 5-year period.}
+#' }
+#'
+#' @source
+#' Harvard Dataverse.
+#' \doi{10.7910/DVN/GTOFJB}
+#'
+#' @usage data(migration_panel)
+#'
+"migration_panel"

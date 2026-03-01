@@ -55,7 +55,7 @@ test_that("model_space: intercept-only row matches fast_ols_const (OLS, no HC)",
   out <- model_space(dat, M = 2, g = "None", HC = FALSE)
   ols_results <- out[[2]]
 
-  # By construction in your code: row 1 is the no-regressors model
+  # By construction: row 1 is the no-regressors model
   y_mat <- as.matrix(dat[, 1])
   ref0 <- fast_ols_const(y_mat)
 
@@ -170,12 +170,37 @@ test_that("model_space: rejects invalid HC argument", {
   )
 })
 
-test_that("model_space: errors when M > K", {
+# UPDATED TEST: new behavior is WARNING + M reset to K (not an error)
+test_that("model_space: when M > K it warns and sets M = K", {
   set.seed(6)
   dat <- cbind(rnorm(10), rnorm(10), rnorm(10))
   colnames(dat) <- c("y", "x1", "x2")
-  # K = 2
-  expect_error(model_space(dat, M = 3, g = "None", HC = FALSE), "M>K")
+  # K = 2, user requests M = 3
+
+  expect_warning(
+    out <- model_space(dat, M = 3, g = "None", HC = FALSE),
+    "M > K: setting M = K"
+  )
+
+  expect_type(out, "list")
+  expect_length(out, 5)
+
+  M_out <- out[[4]]
+  K_out <- out[[5]]
+  MS_out <- out[[3]]
+  ols_results <- out[[2]]
+
+  expect_equal(K_out, 2)
+  expect_equal(M_out, K_out)
+
+  # MS should now reflect M = K
+  MS_exp <- sum(choose(K_out, 0:K_out))
+  expect_equal(as.numeric(MS_out), MS_exp)
+
+  # And the result matrix should have correct dimensions
+  expect_true(is.matrix(ols_results))
+  expect_equal(nrow(ols_results), MS_exp)
+  expect_equal(ncol(ols_results), 3*K_out + 6)
 })
 
 test_that("model_space: g-prior branch works and matches g_regression_fast for a 1-regressor model", {

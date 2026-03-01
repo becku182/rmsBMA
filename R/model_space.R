@@ -52,11 +52,10 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE){
   Var_names <- colnames(data) # names of the variables
   x_names <- Var_names[2:n] # names of the regressors
 
-  if (M > K){# CONDITION about what to do if the user set M that is higher than K (M>K)
-    # we tell the user that we are setting M=K
-    stop("M>K - maximum number of regressors cannot be bigger than total number of regressors. We set M=K (total number of regressors) and continiue :)")
-    M = K # we set M=K
-  }# end of the CONDITION about what to do if the user set M that is higher than K (M>K)
+  if (M > K){
+    warning("M > K: setting M = K (total number of regressors).")
+    M <- K
+  }
 
   y <- as.matrix(data[,1]) # data on the regressant (dependend variable)
   x <- as.matrix(data[,2:n]) # data on the regressors
@@ -196,7 +195,7 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE){
 
   colnames(ols_results) <- rbind(matrix(x_names, nrow = K, ncol = 1),Betas, SEs, matrix(c("log_like", "R^2", "DF", "Dilut"), nrow = 4, ncol =1))
 
-  out<-list(x_names,ols_results,ms,M,K) # we create a model_space object
+  out<-list(x_names,ols_results,MS,M,K) # we create a model_space object
 
   return(out)
 }

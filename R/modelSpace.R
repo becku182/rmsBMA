@@ -1,0 +1,44 @@
+#' Model space for the Trade_data_small dataset
+#'
+#' A pre-computed model space object obtained using the
+#' \code{\link{model_space}} function on the \code{Trade_data_small}
+#' dataset with a maximum of 7 regressors and the Unit Information Prior.
+#'
+#' The object contains all possible linear regression models constructed
+#' from the available regressors (up to 7 included simultaneously),
+#' together with their estimated coefficients, standard errors,
+#' log-marginal likelihood values, R-squared statistics, degrees of
+#' freedom, and dilution prior components.
+#'
+#' The g-prior specification corresponds to the Unit Information Prior
+#' (UIP), i.e. \eqn{g = 1/m}, where \eqn{m} denotes the sample size.
+#'
+#' @format A list of length 5 with the following components:
+#' \describe{
+#'   \item{x_names}{Character vector containing the names of the regressors.}
+#'   \item{ols_results}{Matrix containing the full model space. Each row
+#'   corresponds to a model specification and includes:
+#'   \itemize{
+#'     \item binary inclusion indicators for regressors,
+#'     \item estimated coefficients (including intercept),
+#'     \item standard errors,
+#'     \item log-marginal likelihood,
+#'     \item \eqn{R^2},
+#'     \item degrees of freedom,
+#'     \item dilution prior term.
+#'   }}
+#'   \item{MS}{Integer. Total number of models in the model space.}
+#'   \item{M}{Integer. Maximum number of regressors allowed in each model.}
+#'   \item{K}{Integer. Total number of available regressors.}
+#' }
+#'
+#' @source Generated using:
+#' \preformatted{
+#' modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
+#' }
+#'
+#' @seealso \code{\link{model_space}}
+#'
+#' @keywords datasets
+#' @name modelSpace
+NULL
