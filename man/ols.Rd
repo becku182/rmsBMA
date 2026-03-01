@@ -16,7 +16,7 @@ ols(y, x, const, Norm = NULL)
 \item{Norm}{A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.}
 }
 \value{
-A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix, log(Marginal likelihood).
+A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors' matrix, log(Marginal likelihood).
 }
 \description{
 OLS calculation with additional objects

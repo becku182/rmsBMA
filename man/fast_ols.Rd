@@ -12,7 +12,7 @@ fast_ols(y, x)
 \item{x}{A matrix with with regressors as columns.}
 }
 \value{
-A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix.
+A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors' matrix.
 }
 \description{
 OLS calculation with additional objects

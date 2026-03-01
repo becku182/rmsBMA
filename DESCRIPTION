@@ -4,11 +4,15 @@ Version: 0.1.0
 Authors@R: 
     person("Krzysztof", "Beck", , "beckkrzysztof@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-3679-2962"))
-Description: Bayesian model averaging (BMA) in the circumsence of high number of 
-    regressors and low number of observations. It also provides standard BMA 
-    tools. The package allows estimation of BMA statistics, performing Extreme 
-    Bound Analysis, Bayesian model selection, jointness analysis, and provides 
-    the user with graphical functions for model space and coefficients.
+Description: Implements Bayesian model averaging (BMA) for settings with many
+    candidate regressors relative to the available sample size, including cases
+    where the number of regressors exceeds the number of observations. The
+    package supports reduced model space BMA by restricting attention to models
+    with at most M regressors, thereby preserving degrees of freedom for
+    estimation and inference. It provides posterior summaries, Extreme Bounds
+    Analysis, model selection procedures, jointness measures, and graphical
+    tools for exploring model probabilities, model size distributions, and
+    coefficient distributions.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -28,5 +32,6 @@ Imports:
     tidyr,
     utils
 Depends: 
-    R (>= 2.10)
+    R (>= 3.5.0)
 LazyData: true
+Language: en-US

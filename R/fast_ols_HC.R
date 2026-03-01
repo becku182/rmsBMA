@@ -1,9 +1,9 @@
-#' OLS calculation with heteroscedasticity consisten covariance matrix (MacKinnon & White 1985).
+#' OLS calculation with heteroscedasticity consistent covariance matrix (MacKinnon & White 1985).
 #'
 #' @param y A vector with the dependent variable.
 #' @param x A matrix with with regressors as columns.
 #'
-#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix.
+#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors' matrix.
 #' @export
 #'
 #' @examples

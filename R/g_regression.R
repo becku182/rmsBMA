@@ -17,7 +17,7 @@
 #' 3) Natural logarithm of marginal likelihood \cr
 #' 4) R^2 form ols model \cr
 #' 5) Degrees of freedom \cr
-#' 6) Determinant of the regressors's matrix
+#' 6) Determinant of the regressors' matrix
 #'
 #' @export
 #'

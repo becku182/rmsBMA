@@ -5,7 +5,7 @@
 #' @param const Binary variable: 1 - include a constant in the estimation, 0 - do not include a constant in the estimation.
 #' @param Norm A parameter used to correct likelihood function when it gets to close to zero in the case of high number of observations.
 #'
-#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix, log(Marginal likelihood).
+#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors' matrix, log(Marginal likelihood).
 #' @export
 #'
 #' @examples

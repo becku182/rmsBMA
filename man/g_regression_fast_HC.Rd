@@ -2,7 +2,7 @@
 % Please edit documentation in R/g_regression_fast_HC.R
 \name{g_regression_fast_HC}
 \alias{g_regression_fast_HC}
-\title{Fast regression with g prior and with heteroscedasticity consisten covariance matrix (MacKinnon & White 1985).}
+\title{Fast regression with g prior and with heteroscedasticity consistent covariance matrix (MacKinnon & White 1985).}
 \usage{
 g_regression_fast_HC(data, g = 0.5)
 }
@@ -20,7 +20,7 @@ A list with g_regression objects: \cr
 \item Natural logarithm of marginal likelihood \cr
 \item R^2 form ols model \cr
 \item Degrees of freedom \cr
-\item Determinant of the regressors's matrix
+\item Determinant of the regressors' matrix
 }
 }
 \description{

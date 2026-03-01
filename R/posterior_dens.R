@@ -1,6 +1,6 @@
 #' Graphs of the posterior densities of the coefficients
 #'
-#' This function draws graphs of the posterior densities of all the coeffcients of interest.
+#' This function draws graphs of the posterior densities of all the coefficients of interest.
 #'
 #' @name posterior_dens
 #'

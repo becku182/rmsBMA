@@ -19,7 +19,7 @@ A list with g_regression objects: \cr
 \item Natural logarithm of marginal likelihood \cr
 \item R^2 form ols model \cr
 \item Degrees of freedom \cr
-\item Determinant of the regressors's matrix
+\item Determinant of the regressors' matrix
 }
 }
 \description{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fast_ols_HC.R
 \name{fast_ols_HC}
 \alias{fast_ols_HC}
-\title{OLS calculation with heteroscedasticity consisten covariance matrix (MacKinnon & White 1985).}
+\title{OLS calculation with heteroscedasticity consistent covariance matrix (MacKinnon & White 1985).}
 \usage{
 fast_ols_HC(y, x)
 }
@@ -12,10 +12,10 @@ fast_ols_HC(y, x)
 \item{x}{A matrix with with regressors as columns.}
 }
 \value{
-A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix.
+A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors' matrix.
 }
 \description{
-OLS calculation with heteroscedasticity consisten covariance matrix (MacKinnon & White 1985).
+OLS calculation with heteroscedasticity consistent covariance matrix (MacKinnon & White 1985).
 }
 \examples{
 

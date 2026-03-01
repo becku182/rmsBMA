@@ -2,7 +2,7 @@
 #'
 #' @param y A vector with the dependent variable.
 #'
-#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix.
+#' @return A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors matrix.
 #' @export
 #'
 #' @examples

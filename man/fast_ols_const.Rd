@@ -10,7 +10,7 @@ fast_ols_const(y)
 \item{y}{A vector with the dependent variable.}
 }
 \value{
-A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors's matrix.
+A list with OLS objects: Coefficients, Standard errors, Marginal likelihood, R^2, Degrees of freedom, Determinant of the regressors matrix.
 }
 \description{
 OLS calculation with additional objects for model with just a constant.

@@ -26,7 +26,7 @@
 #' @param Section The number of cross-sections - works only if EF=1.
 #' @param Time_FE Binary variable: 1 - include time fixed effect, 0 - do not include time fixed effects. Works only if EF=1.
 #' @param Section_FE Binary variable: 1 - include cross-section fixed effect, 0 - do not include cross-section fixed effects. Works only if EF=1.
-#' @param STD Binary variable: 1 - standardize the data set, 0 - do not standardize the data set. By standardization we mean subracion of amean and division  by standard deviation of each variable.
+#' @param STD Binary variable: 1 - standardize the data set, 0 - do not standardize the data set. By standardization we mean subtraction of a mean and division  by standard deviation of each variable.
 #'
 #' @return Formatted data set.
 #'
