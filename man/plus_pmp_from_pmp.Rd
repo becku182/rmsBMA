@@ -74,22 +74,6 @@ where \eqn{\mathcal{M}_j} denotes the set of models that include regressor
 This definition follows the sign-probability interpretation in
 \cite{Doppelhofer and Weeks (2009)}.
 }
-\examples{
-\dontrun{
-out <- plus_pmp_from_pmp(
-  pmp_uniform = pmp_uniform,
-  pmp_random  = pmp_random,
-  betas       = betas,
-  VAR         = VAR,
-  DF          = DF,
-  Reg_ID      = Reg_ID
-)
-
-out$Plus_PMP_uniform
-out$Plus_PMP_random
-}
-
-}
 \references{
 Doppelhofer, G. and Weeks, M. (2009).
 \emph{Jointness of growth determinants}.

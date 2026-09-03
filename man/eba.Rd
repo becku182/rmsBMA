@@ -52,11 +52,3 @@ The intercept (constant) is assumed to be included in all models. Each
 regressor is summarized only over models in which it is included, as indicated
 by the model-inclusion matrix \code{Reg_ID}.
 }
-\examples{
-\dontrun{
-eba_tbl <- eba_bounds(betas = betas, VAR = VAR, Reg_ID = Reg_ID)
-rownames(eba_tbl) <- c("Const", x_names)
-eba_tbl
-}
-
-}

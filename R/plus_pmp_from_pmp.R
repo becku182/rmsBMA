@@ -65,20 +65,6 @@
 #' \emph{Jointness of growth determinants}.
 #' Journal of Applied Econometrics, 24(2), 209--244.
 #'
-#' @examples
-#' \dontrun{
-#' out <- plus_pmp_from_pmp(
-#'   pmp_uniform = pmp_uniform,
-#'   pmp_random  = pmp_random,
-#'   betas       = betas,
-#'   VAR         = VAR,
-#'   DF          = DF,
-#'   Reg_ID      = Reg_ID
-#' )
-#'
-#' out$Plus_PMP_uniform
-#' out$Plus_PMP_random
-#' }
 #'
 #' @export
 plus_pmp_from_pmp <- function(pmp_uniform, pmp_random, betas, VAR, DF, Reg_ID) {

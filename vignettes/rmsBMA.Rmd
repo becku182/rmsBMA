@@ -1,0 +1,1001 @@
+---
+title: "rmsBMA: Reduced Model Space Bayesian Model Averaging"
+author: "Krzysztof Beck (Lazarski University)"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+    mathjax: "default"
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{rmsBMA: Reduced Model Space Bayesian Model Averaging}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo       = TRUE,
+  fig.align  = "center",
+  out.width  = "85%",
+  fig.width  = 5.5,
+  fig.height = 4.0
+)
+```
+
+```{=html}
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  TeX: {
+    extensions: ["AMSmath.js", "AMSsymbols.js"]
+  }
+});
+</script>
+```
+
+
+*Acknowledgment: This article was prepared within the research project "Bayesian simultaneous equations model averaging — theoretical development and R package," funded by the Polish National Science Centre, decision No. DEC-2021/43/B/HS4/01745.*
+
+**Abstract.** This article introduces the `rmsBMA` R package for Bayesian model averaging in settings with many candidate regressors relative to the available sample size. The package implements *reduced model space* BMA by restricting attention to models with at most $M$ regressors. This restriction preserves degrees of freedom for estimation and inference and concentrates posterior mass on parsimonious specifications, while still accounting for model uncertainty within the admissible subset of models.
+
+`rmsBMA` supports standard prior structures used in the BMA literature, including Zellner-type $g$-priors and alternative model priors with appropriate truncation under model space reduction. The package further provides heteroscedasticity-consistent inference, Extreme Bounds Analysis, jointness measures, and graphical tools for exploring prior and posterior model probabilities, model size distributions, and coefficient distributions. In addition, it introduces *group dilution*, a non-empirical rule that penalizes models containing multiple proxies for the same theoretical construct. An empirical application illustrates the workflow.
+
+# Introduction
+The problem of model uncertainty plays a crucial role in scientific research that relies on statistical inference [@Leamer+1978]. In recent decades, the most prominent solution to this problem has been Bayesian model averaging (BMA) [@Kass+1995b; @Raftery+1995; @Raftery+1997]. This approach has become especially popular in economics^[For a detailed review of BMA applications in economics, see [@Moral+2015; @Steel+2020].] [e.g., @Liu+2009; @Ductor+2016; @Figini+2017; @DAndrea+2022; @Horvath+2024; @BeckGrabowski2025]; however, it has also been widely adopted in other fields [e.g., @Sloughter+2013; @Baran+2015; @Aller+2021; @Guliyev+2024; @Payne+2024; @Beck+2025]. To this day, BMA remains one of the primary tools for examining the determinants of economic growth [@Fernandez+2001; @Fernandez+2001b; @Sala+2004; @Eicher+2007; @Ley+2012; @Moser+2014; @Arin+2019].
+
+The growing interest in BMA has been fueled by the availability of R packages such as `BMA` [@Raftery+2005], `BAS` [@clyde2011bayesian], `BMS` [@Feldkircher+2015], and `badp` [@BeckWyszynskiDubel2025], as well as the `gretl` BMA package developed by @Blazejowski+2015. Each of these packages provides unique functionalities. The `BMA` package enables model averaging for generalized linear models and survival models, `BAS` implements efficient sampling algorithms, `BMS` offers a comprehensive prior structure and adaptive sampling procedures, while `badp` addresses the issue of simultaneity^[For more on the simultaneity problem within the BMA framework, see [@Moral+2012; @Moral+2013; @Lenkoski+2014; @Leon+2015; @Mirestean+2016; @Moral+2016; @Chen+2018; @Moral+2019].]. The package proposed by @Blazejowski+2015 extends BMA methodology to the `gretl` environment.
+
+`rmsBMA` extends this line of software by addressing issues that remain unexplored in existing implementations. In many empirical applications, researchers face situations in which the number of potential determinants is very large relative to the available sample size. In extreme cases, the number of candidate regressors may even exceed the number of observations. Such situations frequently arise when long questionnaires generate rich information on a limited number of subjects. This setting often produces an extensive list of theory-driven explanatory variables intended to capture specific dimensions of behavior. Consequently, researchers aim to extract a limited subset of regressors that explain variation in the dependent variable in a robust and economically meaningful way. This objective is consistent with the principle of model parsimony in applied research. A classical example is the literature on the money demand function, which considers a broad set of potential determinants. Nevertheless, a workable theory of money demand typically emphasizes only a small number of key variables [@judd1982_search_stable_money_demand; @Laidler1993].
+
+The challenge posed by a large number of potential regressors relative to a limited sample size can be addressed within the BMA framework by restricting the model space. In particular, the researcher may limit attention to models containing at most $M$ regressors. This constraint ensures that a sufficient number of observations remains available for meaningful statistical inference, while simultaneously focusing the analysis on the most relevant determinants. `rmsBMA` facilitates Bayesian model averaging within a reduced model space and provides graphical and analytical tools that allow users to fully exploit this framework.
+
+Another challenge in selecting robust determinants from a large pool of regressors is multicollinearity. In the Bayesian model averaging and model selection literature, this issue is typically addressed through the dilution prior proposed by @George+2010. However, this approach is empirical in nature, as it relies on the correlation structure of the regressors and therefore departs from a fully Bayesian treatment of prior specification.
+
+To address this limitation, the `rmsBMA` package introduces a non-empirical dilution rule, termed *group dilution*. This approach allows users to specify dilution parameters for groups of variables associated with the same underlying theory. As a result, prior probabilities can be appropriately adjusted for models that include multiple proxies capturing the same fundamental determinant.
+
+Finally, the `rmsBMA` package allows users to specify a rich prior structure, compute jointness measures [@Doppelhofer+2009; @Ley+2007; @Hofmarcher+2018], conduct Extreme Bounds Analysis (EBA)^[@Hlavac+2016 developed an R package for EBA.], perform model selection procedures, and generate a wide range of graphical representations of the results. Consequently, `rmsBMA` combines capabilities that are not jointly available in existing R packages or alternative software environments and further contributes original methodological innovations.
+
+The remainder of the manuscript is structured as follows. BMA provides a theoretical overview of Bayesian model averaging, with a particular focus on Bayesian estimation, prior structures, jointness measures, and Extreme Bounds Analysis. Data preparation is described in data, while model_space discusses the construction and estimation of the model space. using_bma presents an overview of the `rmsBMA` functions for performing Bayesian model averaging, computing jointness measures, and presenting the estimation results. The details of the model prior specifications are discussed in priors. Finally, sum concludes.
+
+# Bayesian model averaging: A theoretical overview
+This section outlines the main theoretical foundations of the package. setup presents the model setup, $g$-regression, and the calculation of the marginal likelihood. The principal BMA statistics are described in bma. Subsections g_prior, model_prior, and dilution_prior discuss the $g$-prior, model prior, and dilution prior specifications. Jointness measures are examined in joint. Finally, eba introduces Extreme Bounds Analysis.
+
+## Model setup and Bayesian estimation
+`rmsBMA` is designed to accommodate variations of the standard linear regression model:
+
+$$
+y = \alpha l_N + X_j \beta_j + \varepsilon,
+$$
+
+where $y = (y_1, y_2, \ldots, y_N)'$ denotes the $N \times 1$ vector of the dependent variable and $N$ is the total number of observations. The parameter $\alpha$ is a scalar intercept term, and $l_N$ is an $N \times 1$ vector of ones. The matrix $X_j$ is an $N \times k_j$ matrix of regressors included in model $j$, and $\beta_j$ is the corresponding $k_j \times 1$ vector of coefficients. The index $j$ denotes the model specification, the total number of possible models is $2^K$ (including the model with no regressors), $K$ denotes the total number of potential regressors, and $k_j$ is the number of regressors in model $j$. The error term $\varepsilon$ is an $N \times 1$ vector assumed to follow a normal distribution,
+
+$$
+\varepsilon \sim N(0_N, h^{-1} I_N),
+$$
+
+where $h = \sigma^{-2}$ is the error precision. As is common in the literature, noninformative priors are imposed on parameters that are common to all models [@Koop2003]. The prior on the precision parameter is given by
+
+$$
+p(h) \propto \frac{1}{h},
+$$
+
+while the prior on the intercept is specified as
+
+$$
+p(\alpha) \propto 1.
+$$
+
+The prior on the coefficient vector $\beta_j$ is assumed to be normally distributed:
+
+$$
+\beta_j \mid h \sim N(\underline{\beta_j}, h^{-1}\underline{V_j}).
+$$
+
+The prior mean reflects the assumption that regressors have no systematic effect on the dependent variable. Accordingly,
+
+$$
+\underline{\beta_j} = 0_{k_j}.
+$$
+
+The prior covariance matrix $\underline{V_j}$ is specified using Zellner's $g$-prior [@Zellner+1986], such that
+
+$$
+\underline{V_j} = \left(g_j X_j^{\top} X_j\right)^{-1},
+$$
+
+where $g_j$ is a hyperparameter chosen by the user. Consequently,
+
+$$
+\beta_j \mid h \sim N\!\left(0_{k_j}, h^{-1}\left(g_j X_j^{\top} X_j\right)^{-1}\right).
+$$
+
+The posterior on $\beta_i$ follows a multivariate t distribution with mean
+
+$$
+E(\beta_j|y,M_j) \equiv \bar{\beta_j} = \bar{V_j}X_j^{\top}y
+$$
+
+and covariance matrix
+
+$$
+Var(\beta_j|y,M_j) = \frac{N\bar{s_{j}^2}}{N-2}\bar{V_j}
+$$
+
+where $M_j$ denotes model $j$ the number of degrees of freedom,
+
+$$
+\bar{s}_{j}^2 = \frac{\frac{1}{1+g_j}y^{\top}P_{Z_j}y+\frac{g_j}{1+g_j}(y-\bar{y}l_N)^{\top}(y-\bar{y}l_N)}{N}
+$$
+
+and
+
+$$
+P_{Z_j} = I_N - Z_i(Z_j^{\top}Z_j)^{-1}Z_j^{\top}
+$$
+
+with $Z_j = (l_N,X_N)$. Within this framework the marginal likelihood of model $j$ is given by
+
+$$
+p(y|M_j) \propto \left(\frac{g_j}{1+g_j}\right)^{-\frac{k_j}{2}}\left[\frac{1}{1+g_j}y^{\top}P_{Z_j}y+\frac{g_j}{1+g_j}(y-\bar{y}l_N)^{\top}(y-\bar{y}l_N)\right]^{-\frac{N-1}{2}}
+$$
+
+There are two main extensions to that framework. Firstly, the user might want to opt out of $g$-regression and perform Bayesian model averaging using classical OLS estimates^[This option is chosen by setting parameter `g = "None"` in the `model\_space` function, and described in model_space.] - the so-called Bayesian averaging of classical estimates (BACE) approach proposed by @Sala+2004. Within this approach marginal likelihood of a model $M_j$ may be written as [@Leamer+1978]:
+
+$$
+l_(y|M_j) \propto N^{-k_{j}}\left[(y-\bar{y}l_N)^{\top}(y-\bar{y}l_N)\right]^{-\frac{N}{2}}
+$$
+
+The second extension allows the user to utilize a heteroscedasticity-consistent covariance matrix^[This option is chosen by setting parameter `HC = TRUE` in the `model\_space` function, and described in model_space.]. In this case, the homoscedastic variance expression derived under the normal error assumption is replaced with the HC sandwich estimator of @MacKinnonWhite1985,
+
+$$
+\widehat{\mathrm{Var}}_{HC}(\hat{\beta}_j) = \frac{N}{N-k_j}(Z_j^{\top} Z_j)^{-1}Z_j^{\top}\mathrm{diag}(\hat{\varepsilon}_j^{2})Z_j(Z_j^{\top} Z_j)^{-1},
+$$
+
+where $\hat{\varepsilon}_j = y - Z_j \hat{\beta}_{OLS,j}$ denotes the vector of OLS residuals. This modification provides inference that remains valid under unknown forms of heteroscedasticity.
+While posterior means are derived under the $g$-prior specification, the robust covariance matrix replaces the homoscedastic variance estimator for inference purposes.
+
+## Bayesian model averaging
+The setup described in setup can be used to construct the model space for a given set of potential regressors. The total number of possible models equals $2^K$. However, within the reduced model space approach, the user may restrict attention to models containing at most $M$ regressors. In this case, the total number of admissible models $(J)$ is given by
+
+$$
+J = \sum_{m=0}^{M} \binom{K}{m}.
+$$
+
+Given the considered model space it is possible to perform Bayesian model averaging^[For an introduction to BMA see @Kass+1995b,Raftery+1995,Raftery+1997,Doppelhofer+2009,amini2011bayesian,Beck+2017,Fragoso+2018.]. The posterior model probability (PMP) of model $j$ given the data is
+
+$$
+P(M_{j}|y)=\frac{P(y|M_{j})P(M_{j})}{\sum_{j=1}^{J}P(y|M_{j})P(M_{j})}
+$$
+
+where $P(M_{j})$ denotes prior model probability. In other words, the PMP represents the share of model $j$ in the total posterior probability mass. Alternatively, for BACE the PMP for model $j$ is calculated as:
+
+$$
+P(M_{j}|y)=\frac{l(y|M_{j})P(M_{j})}{\sum_{j=1}^{J}l(y|M_{j})P(M_{j})}.
+$$
+
+With PMPs, it is possible to calculate useful BMA statistics. Let's denote by $\pi_k$ the random variable which is equal to one if the $k^{\text{th}}$ regressor should be considered as the determinant of the dependent variable. The posterior inclusion probability (PIP) for the regressor is given by:
+
+$$
+P(\pi_k = 1 |y) = \sum_{j=1}^{J} \mathbf{1} (k^{\text{th}} \text{ regressor is in model } M_{j}) \cdot P(M_{j}|1)
+$$
+
+where the indicator function $\mathbf{1}$ is equal to one if the regressor is part of the model $M_j$ and zero otherwise. In other words, the PIP tells us how likely it is that the given regressor has impact on the variable of interest.
+
+Another important statistic is the posterior mean (PM) of a given parameter $\beta_k$. Let's denote by $\pi_{\beta_k}$ the random variable which is equal to one if the given parameter is present in the model, and zero otherwise. The posterior mean of $\beta_k$ is given by:
+
+$$
+\mathbb{E}(\beta_k|y)=\sum_{j=1}^{J}\widehat{\beta_k}_{j} \cdot P(M_{j}, \pi_{\beta} = 1 |y)
+$$
+
+where $\widehat{\beta_k}_{j}$ is the value of the coefficient $\beta_k$ in model $j$.
+It tells us what is the mean (or expected) value for the parameter taking into account all considered models.
+
+The posterior variance of the parameter $\beta_k$ is equal to:
+
+$$
+\begin{split}
+Var(\beta_k|y)=\ &\sum_{j=1}^{J} Var(\beta_{k,j}|y,M_j)\cdot P(M_{j},\pi_{\beta_k}=1|y) +\\[1ex]
+&\sum_{j=1}^{J}\Bigl[\widehat{\beta}_{k,j}-\mathbb{E}(\beta_k|y)\Bigr]^{2}\cdot P(M_{j},\pi_{\beta_k}=1|y)
+\end{split}
+$$
+
+where $Var(\beta_{k,j}|y,M_{j})$ denotes the conditional variance of the coefficient $\beta$ in model $M_{j}$ (in other words assuming that the model $M_j$ is the true model). Posterior standard deviation (PSD) of $\beta_k$ is then defined as the square root of the variance:
+
+$$
+SD(\beta_k | y) = \sqrt{ Var(\beta_k | y) }
+$$
+
+Alternatively, one might be interested in the values of the mean and variance on the condition of inclusion of a given parameter, i.e. assuming that it is definitely a part of the model. Note that this is usually determined by the presence of a related regressor. The conditional posterior mean (PMcon) for a parameter $\beta_k$ is given by:
+
+$$
+\mathbb{E}(\beta_k | \pi_{\beta_k}=1,y)=\frac{\mathbb{E}(\beta_k|y)}{P(\pi_{\beta_k} = 1|y)}.
+$$
+
+Similarly, the conditional variance is:
+
+$$
+Var(\beta_k|\pi_{\beta_k}=1,y)=\frac{Var(\beta_k|y)+\mathbb{E}(\beta_k|y)^2}{P(\pi_{\beta_k}=1|y)}-\mathbb{E}(\beta_k|\pi_{\beta_k}=1,y)^2
+$$
+
+and so the conditional standard deviation (PSDcon) is:
+
+$$
+SD(\beta_k | \pi_{\beta_k}=1,y) = \sqrt{ Var(\beta_k | \pi_{\beta_k}=1,y)}
+$$
+
+The next set of statistics that can be calculated within the BMA framework concerns the assessment of the sign of a coefficient associated with a specific regressor. The first measure is the posterior sign certainty (PSC), defined as the posterior probability that a coefficient has the same sign as its posterior mean. PSC is given by
+
+$$
+P\big(\operatorname{sign}(\beta_k)\mid y\big) =
+\begin{cases}
+\displaystyle
+\sum_{j=1}^{J} P(M_j \mid y)\,
+CDF\!\left(t_{k,j}; \mathrm{DF}_j\right),
+& \text{if } \operatorname{sign}\!\left[E(\beta_k \mid y)\right] = 1, \\[12pt]
+
+\displaystyle
+1 -
+\sum_{j=1}^{J} P(M_j \mid y)\,
+CDF\!\left(t_{k,j}; \mathrm{DF}_j\right),
+& \text{if } \operatorname{sign}\!\left[E(\beta_k \mid y)\right] = -1,
+\end{cases}
+$$
+
+where
+
+$$
+t_{k,j} \equiv
+\frac{\hat{\beta}_{k \mid M_j}}
+{\widehat{\mathrm{SD}}_{k \mid M_j}},
+$$
+
+$\mathrm{DF}_j$ denotes the number of degrees of freedom in model $j$, and $\mathrm{CDF}(\cdot;\mathrm{DF}_j)$ denotes the cumulative distribution function of the Student-$t$ distribution with $\mathrm{DF}_j$ degrees of freedom.
+
+The second measure is the posterior probability of a positive sign of the coefficient, denoted by $P(+)$. It is defined as
+
+$$
+P(\beta_k > 0 \mid y)
+=
+\sum_{j \in \mathcal{M}_k}
+P(M_j \mid y)\,
+CDF\!\left(
+t_{k,j};
+\mathrm{DF}_j
+\right).
+$$
+
+While PSC measures the probability that the coefficient retains the same sign as its posterior mean, $P(+)$ directly measures the posterior probability that the coefficient is strictly positive.
+
+The BMA statistics allow the assessment of the robustness of the examined regressors.
+@Raftery+1995, classifies a variable as weak, positive, strong, and very strong when the posterior inclusion probability (PIP) is between 0.5 and 0.75, between 0.75 and 0.95, between 0.95 and 0.99, and above 0.99, respectively.
+@Raftery+1995 also refers to the variable as robust when the absolute value of the ratio of posterior mean (PM) to posterior standard deviation (PSD) is above 1, indicating that the regressor improves the power of the regression.
+@Masanjala+2008 propose a more stringent criterion, where they require the statistic to be higher than 1.3, while @Sala+2004 argue for 2, corresponding to $90\
+
+## $g$-priors
+In order to obtain the marginal likelihood function given in equation g_like and described in setup, the user needs to specify the hyperparameter `g` in Zellner's $g$-prior. The parameter `g` controls the prior variance of the regression coefficients and thus determines the degree of shrinkage toward zero. Larger values of `g` imply weaker shrinkage (i.e., more diffuse priors), while smaller values impose stronger shrinkage toward the null model.
+
+`rmsBMA` package offers the user the choice between the following conventionally applied choices for $g$:
+
+1. Unit information prior [@Kass+1995]
+    
+   $$g = \frac{1}{N}$$
+2. Risk inflation criterion [@Foster+1994]
+    
+   $$g = \frac{1}{K^{2}}$$
+3. Benchmark prior [@Fernandez+2001]
+    
+   $$g = \frac{1}{\max\!\left(N, K^{2}\right)}$$
+4. Prior that mimics Hannan-Quinn information criterion [@Fernandez+2001]
+    
+   $$g = \frac{1}{\left(\log m\right)^{3}}$$
+5. Square root of unit information prior [@Fernandez+2001]
+    
+   $$g = \sqrt{\frac{1}{N}}$$
+
+Moreover, the user may specify any strictly positive numerical value for the hyperparameter $g$.
+
+## Model priors
+To perform BMA one needs to specify prior model probability^[For a thorough discussion of model priors see @Sala+2004,Ley+2009,George+2010,Eicher+2011.].
+The package offers two main options.
+The first is binomial model prior [@Sala+2004]:
+
+$$
+P(M_{j})=(\frac{EMS}{K})^{k_{j}}(1-\frac{EMS}{K})^{K-k_{j}}
+$$
+
+where $EMS$ is the expected model size and $k_{j}$ is a number of regressors in model $j$.
+If $EMS = \frac{K}{2}$, the binomial model prior simplifies to a uniform model prior with $P(M_{j}) = \frac{1}{2^K}$ for every $j$, meaning that all models are assumed to have equal probabilities.
+The second is binomial-beta model prior @Ley+2009 given by:
+
+$$
+P(M_{j}) \propto \Gamma(1+k_{j}) \cdot \Gamma(\frac{K-EMS}{EMS}+K-k_{j}).
+$$
+
+where $\Gamma$ is the gamma function.
+In the context of the binomial-beta prior $EMS = \frac{K}{2}$ corresponds to equal probabilities on model sizes.
+
+When reduced model space Bayesian model averaging is performed, both the binomial and beta-binomial model priors are truncated. As a result, the prior distribution over model size is restricted to models containing at most $M$ regressors (where $M$ is specified by the user), and the prior is renormalized so that the total probability mass over this admissible subset equals one.
+
+## Dilution priors
+In order to account for potential multicollinearity between regressors one can use dilution prior introduced by @George+2010.
+The dilution prior involves augmenting the model prior (binomial or binomial-beta) with a function that accounts for multicollinearity:
+
+$$
+P_{D}(M_{j}) \propto P(M_{j})|\mathrm{COR}_j|^{\omega}
+$$
+
+where $P_{D}(M_{j})$ is the diluted model prior, $|\mathrm{COR}_j|$ is the determinant of the correlation matrix of regressors in model $j$,
+and $\omega$ is the dilution parameter.
+The lower the correlation between regressors, the closer $|\mathrm{COR}_j|$ is to one, resulting in a smaller degree of dilution.
+
+The dilution prior proposed by @George+2010 is empirical in nature, as it relies on the determinant of the correlation matrix of the regressors, denoted by $|\mathrm{COR}_j|$, and therefore departs from a fully Bayesian treatment of prior specification. To address this limitation, the `rmsBMA` package introduces a non-empirical dilution rule, termed *group dilution*. This approach enables users to specify dilution parameters for groups of variables representing the same underlying theoretical construct. Consequently, prior model probabilities can be systematically adjusted for specifications that include multiple proxies for a common fundamental determinant.
+
+As group dilution is introduced here for the first time, it is presented in two stages. First, the case of a single group-specific dilution parameter is considered. Second, the framework is extended to allow for a vector of group-specific dilution parameters.
+
+For the case of a single group-specific dilution parameter, let $\gamma_j = (\gamma_{j,1}, \gamma_{j,2}, \ldots, \gamma_{j,K}) \in \{0,1\}^K$ denote the indicator vector associated with model $j$, where $\gamma_{j,k} = 1$ if regressor $k$ is included in the model and $\gamma_{j,k} = 0$ otherwise.
+
+Each regressor $k$ is assigned to a group $\mathrm{GR}(k) \in \{0,1,2,\ldots\}$, where $\mathrm{GR}(k) = 0$ indicates that the regressor does not belong to any group, while positive integers identify groups of related regressors. The grouping structure is specified by the researcher, who assigns regressors associated with the same theoretical construct to common groups labeled $h=1,2,\ldots$.
+
+Let $p \in (0,1]$ denote a scalar group-specific dilution parameter that reflects the researcher’s prior belief regarding the extent to which multiple proxies capture the same underlying determinant. For a given model $j$ and group $h \ge 1$, define the number of included regressors from group $h$ as
+
+$$
+c_{j,h} = \sum_{k=1}^{K} \gamma_{j,k} \, \mathbb{I}\{ \mathrm{GR}(k) = h \},
+$$
+
+where $\mathbb{I}\{\cdot\}$ denotes the indicator function.
+The group-specific dilution exponent is defined as
+
+$$
+d_{j,h} = \max\{0,\, c_{j,h} - 1\}.
+$$
+
+Thus, models including zero or one regressor from group $h$ incur no penalty, while each additional regressor beyond the first contributes one unit to the dilution exponent.
+The total dilution exponent for model $j$ is obtained by summing across all groups,
+
+$$
+D_j = \sum_{h \ge 1} d_{j,h}
+    = \sum_{h \ge 1} \max\{0,\, c_{j,h} - 1\}.
+$$
+
+The resulting group-based dilution prior component for model $j$ is given by
+
+$$
+\phi_j \propto p^{D_j}.
+$$
+
+This construction penalizes models that include multiple regressors from the same group, while allowing regressors from different groups to enter the model independently. Regressors not assigned to any group ($\mathrm{GR}(k)=0$) do not affect the group dilution prior. Finally, the diluted model prior is given by:
+
+$$
+P_{G}(M_{j}) \propto P(M_{j})p^{D_j}.
+$$
+
+The second case, involving a vector of group-specific dilution parameters, generalizes the previous specification by allowing heterogeneous dilution across groups. This extension acknowledges that the researcher may assign different degrees of prior redundancy to different sets of proxies. Let
+
+$$
+\mathbf{p} = (p_h)_{h \ge 1}
+$$
+
+denote a collection of dilution parameters, where $p_h \in (0,1]$ is assigned to group $h$. Using the previously defined quantities $c_{j,h}$ and $d_{j,h}$, the group-based dilution prior component for model $j$ is given by
+
+$$
+\phi_j
+=
+\prod_{h \ge 1} p_h^{\, d_{j,h}}
+=
+\prod_{h \ge 1} p_h^{\, \max\{0,\, c_{j,h} - 1\}}.
+$$
+
+Thus, each group contributes independently to the overall dilution of model $j$, with the strength of the penalty governed by its corresponding parameter $p_h$. Regressors not assigned to any group ($\mathrm{GR}(k)=0$) do not affect the dilution prior. When all group-specific parameters are equal, i.e., $p_h = p$ for all $h \ge 1$, the dilution prior reduces to
+
+$$
+\phi_j = p^{D_j},
+$$
+
+which corresponds to the scalar-parameter case.
+
+## Jointness measures
+To determine whether regressors are substitutes or complements,
+various authors have developed jointness measures^[To learn more about jointness measures, we recommend reading @Doppelhofer+2009, Ley+2007, Hofmarcher+2018 in that order.]. Assuming two different covariates $a$ and $b$, let $P(a\cap b)$ be the posterior probability of the inclusion of both variables, $P(\overline{a}\cap \overline{b})$ the posterior probability of the exclusion of both variables, $P(\overline{a}\cap b)$ and $P(a\cap \overline{b})$ denote the posterior probability of including each variable separately.
+The first measure of jointness is simply $P(a\cap b)$.However, this measure ignores much of the information about the relationships between the regressors.
+@Doppelhofer+2009 measure is defined as:
+
+$$
+J_{DW}=\text{log}\left[\frac{P(a\cap b) \cdot P(\overline{a}\cap \overline{b})}{P(\overline{a}\cap b) \cdot P(a\cap \overline{b})}\right].
+$$
+
+If $J_{DW} < -2$, $-2 < J_{DW} < -1$, $-1 < J_{DW} < 1$, $1 < J_{DW} < 2$, and $J_{DW} > 2$, the authors classify the regressors as strong substitutes, significant substitutes, not significantly related, significant complements, and strong complements, respectively.
+Jointness measure proposed by @Ley+2007 is given by:
+
+$$
+J_{LS}=\frac{P(a\cap b)}{P(\overline{a}\cap b)+P(a\cap \overline{b})}.
+$$
+
+The measure takes values in the range $[0, \infty)$, with higher values indicating a stronger complementary relationship.
+
+Finally, @Hofmarcher+2018 measure of jointness is:
+
+$$
+J_{HCGHM}=\frac{(P(a\cap b)+\rho) \cdot P(\overline{a}\cap \overline{b})+\rho)-(P(\overline{a}\cap b)+\rho) \cdot P(a\cap \overline{b})+\rho)}{(P(a\cap b)+\rho) \cdot P(\overline{a}\cap \overline{b})+\rho)+(P(\overline{a}\cap b)+\rho) \cdot P(a\cap \overline{b})+\rho)+\rho}.
+$$
+
+@Hofmarcher+2018 advocate the use of the @Jeffreys+1946 prior, which results in $\rho=\frac{1}{2}$.
+The measure takes values from -1 to 1, where values close to -1 indicate substitutes, and those close to 1 complements.
+
+## Extreme Bounds Analysis
+Extreme Bounds Analysis (EBA) was developed by @Leamer+1981,Leamer+1983,Leamer+1985. EBA provides one of the most restrictive tests of robustness for the regressors under examination. The application of this approach led to well-known findings, such as the fragility of growth determinants reported by @Levine+1992. The restrictiveness of EBA subsequently motivated the development of less stringent variants of the method [@Granger+1990; @Sala+1997], and ultimately contributed to the emergence of Bayesian model averaging.
+
+However, the restrictiveness of EBA is also one of its main virtues: variables that pass the EBA test can be regarded as robust determinants in the strongest possible sense. The `rmsBMA` package allows the user to implement a highly restrictive version of EBA to identify which regressors satisfy this demanding robustness criterion.
+
+The idea of the test involves estimating all considered $J$ models and identifying the specifications that yield the lowest and highest estimated coefficient values for a given regressor $k$. The upper extreme bound ($B_{k,U}$) for regressor $k$ is calculated as
+
+$$
+B_{k,U} = \beta_{k,\max} + 2*SE_{k,\max},
+$$
+
+and the lower extreme bound ($B_{k,L}$) as
+
+$$
+B_{k,L} = \beta_{k,\min} - 2*SE_{k,\min},
+$$
+
+where $\beta_{k,\max}$ and $\beta_{k,\min}$ denote the highest and lowest estimated values of the coefficient for variable $k$, respectively, and $SE_{k,\max}$ and $SE_{k,\min}$ are the corresponding standard errors.
+
+The EBA test is passed if
+
+$$
+\mathrm{sgn}(B_{k,U}) = \mathrm{sgn}(B_{k,L}).
+$$
+
+Consequently, this test is extremely stringent, as even a single poorly specified model may lead to its failure---a situation analogous to a false negative result. Nevertheless, if a regressor passes this test, its robustness is difficult to question.
+
+# Data preparation
+
+This section demonstrates how to prepare the data for estimation. The first step involves installing the package and subsequently loading it into the R session.
+
+```{r eval=FALSE}
+install.packages("rmsBMA")
+```
+
+```{r}
+
+library(rmsBMA)
+```
+
+
+Throughout the manuscript, we use the data from @Beck2020WhatDrivesInternationalTrade on the determinants of international trade in the European Union (`Trade_data` and `Trade_data_small`). The package includes this datasets together with a detailed description of all variables. Since `Trade_data` is cross-sectional, while the package provides dedicated functionality for panel data analysis, we begin the presentation of the package using panel data on the determinants of international migration (`migration_panel`) from [@afonso_alves_beck_2025]. Detailed information on the dataset can be accessed by:
+
+```{r eval=FALSE}
+?migration_panel
+```
+
+A visual inspection of the dataset can be performed by typing:
+```{r}
+
+migration_panel[1:10,1:7]
+```
+
+
+The first two columns represent the time identifier and the cross-sectional identifier; the cross-sectional unit in this dataset is a country pair. The third column contains the dependent variable, while the remaining columns correspond to the regressors.
+
+The researcher may wish to estimate a fixed effects model or standardize the data. This can be accomplished using the `data_preparation` function. As an illustration, we introduce both time and cross-sectional fixed effects, along with data standardization. The user should specify which column indicates time (`time`) and which indicates the cross-sectional unit (`id`). To include both time and cross-sectional fixed effects, `effect = "twoway"` should be set. Finally, to standardize the data, the user should specify `standardize = TRUE`.
+
+```{r}
+
+data <- data_preparation(migration_panel,
+                         time = "Year_0",
+                         id = "Pair_ID",
+                         fixed_effects = TRUE,
+                         effect = "twoway",
+                         standardize = TRUE)
+data[1:10,1:6]
+```
+
+
+As shown above, the `data_preparation` function removes the columns corresponding to the time and cross-sectional identifiers. This produces the data format required by the `model_space` function, where the dependent variable is placed in the first column and the regressors occupy the remaining columns. If the user has panel data without explicit time and cross-sectional identifiers, the `data_preparation` function can be used to introduce fixed effects and perform standardization.
+
+As mentioned earlier the main dataset used in this manuscript is cross-sectional on the determinants of international trade. In this case the user can still utilize `data_preparation` function for standardization of the data.
+
+```{r}
+
+data <- data_preparation(Trade_data,
+                         standardize = TRUE)
+data[1:10,1:6]
+```
+
+
+However, in the remainder of the manuscript, we use the unstandardized version of `Trade_data`. For detailed information on the dataset, type:
+
+```{r eval=FALSE}
+?Trade_data
+```
+
+# Estimation of the model space
+
+Before conducting Bayesian model averaging or Extreme Bounds Analysis, the model space must first be specified. In the `rmsBMA` package, the `model_space` function is used to construct the model space. The first argument of the function is `df`, a data matrix in which the first column contains the dependent variable and the remaining columns correspond to the regressors. The second argument, `M`, determines the maximum number of variables allowed in the considered models. Consequently, this parameter governs the size of the model space given the total number of regressors and enables reduced model space Bayesian model averaging. If the user does not specify `M`, it is set equal to the total number of regressors, and the standard version of Bayesian model averaging is performed.
+
+The third argument, `g`, allows the user to specify the $g$-prior. The user may select one of the predefined options described in g_prior or provide any positive numerical value. The default option is `"UIP"` (the unit information prior). Setting `g = "None"` instructs the function to omit $g$-regression and compute results based on Bayesian averaging of classical estimates. When `HC = TRUE`, the function replaces the conventional covariance matrix of the estimators with the heteroscedasticity-consistent covariance matrix described in equation hc, and the corresponding robust standard errors are computed from its diagonal elements.
+
+Suppose we wish to consider a model space that includes all models with at most 10 regressors, estimated using the benchmark prior and the conventional covariance matrix:
+
+```{r eval=FALSE}
+modelSpace10 <- model_space(Trade_data, M = 10, g = "Benchmark")
+```
+
+Alternatively user could consider model space of identical size, however, with the use of Bayesian averaging of classical estimates and heteroscedasticity consistent covariance matrix:
+
+```{r eval=FALSE}
+modelSpace10_none <- model_space(Trade_data, M = 10, g = "None", HC = TRUE)
+```
+
+For the reminder of the manuscript we are going to utilize smaller model space available to the user within the package and constructed using `Trade_data_small`
+
+```{r eval=FALSE}
+modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
+```
+
+The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list consisting of five components, comprising the full model space and additional elements required for subsequent use in the `bma` function.
+
+# Performing Bayesian model averaging
+
+## Bayesian model averaging: The `bma function`
+The `bma` function enables users to perform Bayesian model averaging using
+the object obtained with the `model_space` function. The `round` parameter specifies the decimal place to which the BMA statistics should be rounded in the results.
+
+```{r}
+
+bma_results <- bma(modelSpace, round = 3)
+```
+
+
+The `bma` function returns a list containing 15 elements. However, most of these elements are only required for other functions. The main objects of interest are the two tables with the BMA statistics. The results obtained with binomial model prior are first on the list.
+
+```{r}
+
+bma_results[[1]]
+```
+
+
+PIP denotes the posterior inclusion probability, PM denotes the posterior mean, PSD denotes the posterior standard deviation. PMcon, PSDcon,denote the posterior mean and posterior standard deviation, respectively, conditional on the inclusion of the regressor in the model. Users should base their interpretation of the results on conditional BMA statistics only when they believe that certain regressors must be included. PSC is posterior sign certainty or posterior probability that the sing of a regressor is the same as the sing of PM, and P(+) is the posterior probability of the positive sign.
+
+Two variables stand out: `LNDGEO` and `LNRGDPPROD`, representing geographical distance and the product of real GDPs, respectively. Both exhibit posterior inclusion probabilities (PIP) approximately equal to one, and the ratio of the posterior mean to the posterior standard deviation is well above two in terms of absolute value. The posterior sign certainty (PSC) and $P(+)$ indicate that the signs of the coefficients are extremely stable across the model space. These results demonstrate that the two variables are robust determinants of international trade and justify their central role in the gravity model of trade [@Tinbergen1962ShapingWorldEconomy], which has become a workhorse framework in the field [@Feenstra2015AdvancedTrade].
+
+`INFVAR` and `LANDpc`, representing the difference in inflation variability and land *per capita*, respectively, are also characterized by high posterior inclusion probabilities (PIP) and a large absolute ratio of the posterior mean (PM) to the posterior standard deviation (PSD). However, the reported values of PM and PSD for `LANDpc` are both equal to zero. This results from the difference in measurement units between the dependent variable and this regressor. To mitigate this issue, the user may standardize the data prior to estimation using the `model_space` function. The variable `B` (common border) also satisfies the least stringent robustness criterion proposed by @Raftery+1995. The remaining regressors may be regarded as fragile.
+The results obtained with binomial-beta model prior is included as the second object in the `bma` list.
+
+```{r}
+
+bma_results[[2]]
+```
+
+
+The results obtained under the binomial--beta model prior corroborate those derived from the binomial model prior. The third element of the `bma` output list contains the results of the Extreme Bounds Analysis:
+
+```{r}
+
+bma_results[[3]]
+```
+
+
+The columns of the table report the following statistics: the lower bound (Equation lb), the minimum value of the coefficient, the average value of the coefficient, the maximum value of the coefficient, the upper bound (Equation ub), the result of the EBA test (Equation eba_test), and the percentage of positive coefficients across the model space.
+
+Notably, four variables—`B`, `LNDGEO`, `LNRGDPPROD`, and `INFVAR`—pass the stringent EBA criterion. However, the issue related to the measurement units of the `LANDpc` regressor reappears. When standardized data are used, this variable also satisfies the EBA test.
+
+The fourth object in the list is a table containing the prior and posterior expected model sizes for the binomial and binomial-beta model priors.
+
+```{r}
+
+bma_results[[4]]
+```
+
+
+The results indicate that, after observing the data, the researcher should expect approximately five to six regressors in the model under both the binomial and the binomial--beta model priors. The posterior expected model size can be computed as the sum of the posterior inclusion probabilities.
+
+The table also illustrates a potential pitfall of using  reduced model space Bayesian model averaging. Both the prior and posterior expected model sizes may exceed the size of the largest model considered. If this occurs for the posterior expected model size, the researcher should consider enlarging the maximum model size. However, a high posterior expected model size may simply reflect a high prior expected model size. Consequently, careful experimentation and robustness checks are recommended.
+
+## Prior and posterior model probabilities
+
+The `model_pmp` function allows the user to compare prior and posterior model probabilities over the entire model space in the form of a graph.
+The models are ranked from the one with the highest to the one with the lowest posterior model probability.
+The function returns a list with three objects:
+
+1. a graph for the binomial model prior;
+2. a graph for the binomial-beta model prior;
+3. a combined graph for both binomial and binomial-beta model priors.
+
+The user can retrieve each graph separately from the list; however, the function automatically displays a combined graph.
+
+```{r}
+
+for_models <- model_pmp(bma_results)
+```
+
+
+The graphs demonstrate that great share of the posterior probability mass is concentrated within just a couple of models.
+To view the results for only the best models, the user can use the `top` parameter.
+
+```{r}
+
+for_models <- model_pmp(bma_results, top = 10)
+```
+
+
+The last graph is particularly illuminating. It demonstrated that the best three models are associated with vastly higher posterior model probabilities than the rest. It will be very instructive to see those models. The models in question will be identified after implementing `model_sizes` (through `best_models`, which is covered in the section below).
+
+The `model_sizes` function displays prior and posterior model probabilities on a graph for models of different sizes. Similarly to the `model_pmp` function is returns a list with three objects:
+
+1. a graph for the binomial model prior;
+2. a graph for the binomial-beta model prior;
+3. a combined graph for both binomial and binomial-beta model priors.
+
+Again, the user can retrieve each graph separately from the list; however, the function automatically displays a combined graph.
+
+```{r}
+
+size_graphs <- model_sizes(bma_results)
+```
+
+
+The graph illustrates that the posterior distribution over model sizes is largely independent of the prior specification, as it appears very similar under both the binomial and the binomial--beta model priors.
+
+## Selecting the best models
+
+The `best_models` function allows the user to view a chosen number of the best models in terms of posterior model probability.
+The function returns a list containing six objects:
+
+1. An inclusion table stored as an array object;
+2. A table with estimation results, stored as an array object;
+3. An inclusion table stored as a knitr object;
+4. A table with estimation results, stored as a knitr object;
+5. An inclusion table stored as a gTree object;
+6. A table with estimation results, stored as a gTree object.
+
+The parameter `estimate` pertain only to the results that will be automatically displayed after running the function. The parameter `criterion` determines whether the models should be ranked according to posterior model probabilities calculated using the binomial (1) or binomial-beta (2) model prior.
+To obtain the inclusion array for the 10 best models ranked with the binomial model prior, the user needs to run:
+
+```{r}
+
+best_8_models <- best_models(bma_results, criterion = 1, best = 8)
+best_8_models[[1]]
+```
+
+
+A value of 1 indicates the inclusion of a given regressor in a model, while the second-to-last row reports the posterior model probability associated with each specification. The table shows that the first three models account for 32\
+
+To generate a `knitr` table with the estimation output for the three best models ranked according to the binomial--beta model prior, the user should run:
+```{r}
+
+best_3_models <- best_models(bma_results, criterion = 2, best = 3)
+best_3_models[[4]]
+```
+
+The table shows that the first three models account for 26\
+
+Finally, to obtain a gTree table with estimation output for the top 3 models ranked by the binomial-beta model prior, the user needs to run:
+
+```{r}
+
+best_3_models <- best_models(bma_results, criterion = 2, best = 3)
+grid::grid.draw(best_3_models[[6]])
+```
+
+
+## Calculating jointness measures
+
+Within the BMA framework, it is possible to establish the nature of the relationship between pairs of examined regressors using the jointness measures. This can be accomplished using the `jointness` function. The latest jointness measure, introduced by @Hofmarcher+2018, has been shown to outperform older alternatives developed by @Ley+2007 and @Doppelhofer+2009^[See section joint for the interpretations of jointness measures.]. Therefore, the @Hofmarcher+2018 measure is the default option in the `jointness` function^[We compute the measure using the command with the subsetting operator `[1:9, 1:9]` is applied to restrict the output to the first nine rows and columns for presentation purposes.].
+
+```{r}
+
+jointness(bma_results)[1:9,1:9]
+```
+
+
+The entries above the main diagonal report the results obtained under the binomial model prior, whereas the entries below the diagonal correspond to the binomial-beta model prior. Positive values of the measure indicate a complementary relationship between regressors, while negative values indicate they are substitutes. Consistent with the previous findings, `LNDGEO` and `LNRGDPPROD` exhibit strong complements. By contrast, `LNRGDPPROD` and `LAND` are relatively strong substitutes. Notably, `LNDGEO` and `B` are identified as complements, implying that geographical distance and the presence of a common border capture distinct dimensions of the forces behind the international trade.
+
+To obtain the results for the @Ley+2007 measure, the user should run:
+
+```{r warning=FALSE}
+jointness(bma_results, measure = "LS")[1:9,1:9]
+```
+
+For the @Doppelhofer+2009 measure type:
+
+```{r warning=FALSE}
+jointness(bma_results, measure = "DW")[1:9,1:9]
+```
+
+A drawback of the measures proposed by @Ley+2007 and @Doppelhofer+2009, as illustrated in the previous two tables, is that they may yield problematic outputs such as `NaN` or `Inf`. This issue does not arise with the measure introduced by @Hofmarcher+2018. Avoiding such numerical irregularities constitutes one of several arguments advanced by @Hofmarcher+2018 in favor of their approach and helps explain why their measure performs more reliably than the alternatives.
+
+## Visualizing model coefficients and posterior distributions
+
+The `coef_hist` function allows the user to plot the distribution of estimated coefficients.
+It returns a list containing a number of objects equal to the number of regressors plus one (for the constant). The first object in the list is a graph of the constants, while the remaining objects are graphs of the coefficients for the other regressors. The graph for the constants collects coefficients from the entire model space, whereas the graphs for the other regressors only collect coefficients from the models that include the given regressor.
+
+There are two principal approaches to visualizing the posterior distributions of the coefficients. The first approach relies on a histogram. The `coef_hist` function allows the user to control the binning of the histogram through several arguments (`BW`, `binW`, `BN`, and `num`). To specify 80 bins for each graph, the following code can be used:
+
+```{r}
+
+bin_sizes <- matrix(80, nrow = 11, ncol = 1)
+coef_plots <- coef_hist(bma_results, BN = 1, num = bin_sizes)
+coef_plots[[3]]
+```
+
+
+The second option allows the user to plot kernel densities.
+```{r}
+
+coef_plots2 <- coef_hist(bma_results, kernel = 1)
+coef_plots2[[5]]
+```
+
+
+The choice of appropriate plotting options is left to the user's preferences regarding the style of presentation and the size of the model space.
+```{r}
+
+library(gridExtra)
+grid.arrange(coef_plots[[3]], coef_plots[[5]], coef_plots2[[3]],
+             coef_plots2[[5]], nrow = 2, ncol = 2)
+```
+
+
+One additional option available to the user with the `coef_hist` function is weighting coefficients by posterior model probabilities. This can be accomplished using the `weight` parameter, whose default value is set to `NULL`. Setting `weight` to `"binomial"` or `"beta"` results in plotting histograms based on the binomial or binomial–beta model prior, respectively. For example, in the case of the binomial–beta model prior, it can be observed that the value of the posterior mean is mainly driven by the model characterized by the highest posterior model probability.
+
+```{r}
+
+coef_plots3 <- coef_hist(bma_results, weight = "beta", BN = 1, num = bin_sizes)
+coef_plots3[[5]]
+```
+
+
+The `posterior_dens` allows the user to plot posterior distributions of coefficients. Similarly, to `coef_hist` function, `posterior_dens` returns a list containing a number of objects equal to the number of regressors plus one. The first object in the list is a graph of the posterior distribution for the lagged dependent variable, while the remaining objects are graphs of the posterior distribution for the other regressors. The user needs to specify whether to plot posterior distributions based on the binomial (`prior = "binomial"`) or binomial-beta (`prior = "beta"`) model prior, as well as whether to use regular (`SE = "standard"`) or robust (`SE = "robust"`) standard errors used in the calculation of posterior objects.
+
+```{r}
+
+distPlots <- posterior_dens(bma_results, prior = "binomial")
+grid.arrange(distPlots[[3]], distPlots[[5]], nrow = 2, ncol = 1)
+```
+
+
+# Changes in model priors
+
+This section provides a more detailed description of the available model prior options.
+Subsection ems discusses the consequences of changes in the expected model size, while subsection dil describes the dilution priors.
+
+## Changing expected model size
+
+The `bma` function calculates BMA statistics using both the binomial and binomial-beta model priors.
+By default, the `bma` function sets the expected model size (EMS) to $K/2$, where $K$ denotes the total number of regressors. The binomial model prior with $EMS = K/2$ leads to a uniform model prior, assigning equal probabilities to all models. In contrast, the binomial-beta model prior with $EMS = K/2$ assumes equal probabilities across all model sizes. However, the user can modify the prior model specification by changing the `EMS` parameter. First, consider the consequence of concentrating prior probability mass on small models by setting $EMS = 2$.
+
+```{r}
+
+bma_results2 <- bma(modelSpace, round = 3, EMS = 2)
+```
+
+
+Before turning to the main BMA results, let us focus on the changes in the posterior probability mass with respect to model sizes.
+
+```{r}
+
+bma_results2[[4]]
+```
+
+
+The results show that decreasing the prior expected model size led to a small decline in the posterior expected model size. The consequences of this change in the prior expected model size are best illustrated using the prior and posterior probability mass over model sizes.
+
+```{r}
+
+size_graphs2 <- model_sizes(bma_results2)
+```
+
+
+For the dataset considered in the manuscript, the resulting differences in posterior inference are negligible, as the likelihood contribution from the data substantially outweighs the influence of the prior specification.
+
+The corresponding changes in the distribution of posterior probability mass over the model space are likewise negligible.
+```{r}
+
+model_graphs2 <- model_pmp(bma_results2)
+```
+
+
+The principal posterior summary statistics under the binomial model prior exhibit only minimal change.
+
+```{r}
+
+bma_results2[[1]]
+```
+
+
+The results for binomial-beta model prior are very similar.
+```{r}
+
+bma_results2[[2]]
+```
+
+
+It is also very instructive to examine the jointness measures calculated under the new prior specification.
+
+```{r}
+
+jointness(bma_results2, measure = "HCGHM", rho = 0.5, round = 3)[1:9,1:9]
+```
+
+
+The jointness measures likewise exhibit only minor changes.
+
+Next, to examine the consequences of concentrating prior probability mass on larger models, `EMS` was set to eight, which exceeds the maximum number of regressors permitted in the model.
+
+```{r}
+
+bma_results8 <- bma(modelSpace, round = 3, EMS = 8)
+bma_results8[[4]]
+```
+
+
+The posterior model size increased for both the binomial prior and the binomial-beta model prior.
+The most interesting aspect is the new graphs of prior and posterior probability mass over the model sizes.
+
+```{r}
+
+size_graphs8 <- model_sizes(bma_results8)
+```
+
+
+In both cases, the posterior probability mass has concentrated near the models with higher number of regressors.
+This conclusion is further supported by the graphs of posterior model probability across the entire model space.
+
+```{r}
+
+model_graphs8 <- model_pmp(bma_results8)
+```
+
+
+The Figure demonstrates that the change in the expected model size led to a substantial increase in the posterior model probability for the best models. The increase in the expected model size also influenced the main BMA statistics.
+
+```{r}
+
+bma_results8[[1]]
+```
+
+
+The PIPs increased considerably, however, the main conclusions from the main exercise remain the same. Similar situation is present in the case of binomial-beta model prior.
+
+```{r}
+
+bma_results8[[2]]
+```
+
+
+Again, it is instructive to examine the jointness measures.
+```{r}
+
+jointness(bma_results8, measure = "HCGHM", rho = 0.5, round = 3)[1:9,1:9]
+```
+
+
+## Dilution prior
+One of the main issues associated with identifying robust regressors is multicollinearity. Some regressors may approximate the same underlying factor influencing the dependent variable. Multicollinearity may result from the absence of observable variables associated with a specific theory or from a theory failing to provide a unique candidate for a regressor. Moreover, some regressors may share a common determinant. The dilution prior proposed by @George+2010, described in detail in the section below, constitutes one of the available approaches for addressing this issue.
+
+To apply the dilution prior, the user must set `dilution = 1` in the `bma` function.
+The user can also manipulate the dilution parameter $\omega$. The default option is `dil.Par = 0.5`, as recommended by @George+2010.
+```{r}
+
+bma_results_dil <- bma(
+  modelSpace = modelSpace,
+  round       = 3,
+  dilution    = 1
+  )
+```
+
+
+The effect of implementing the dilution prior is well depicted by the distribution of prior probability mass over the model sizes.
+
+```{r}
+
+size_graphs_dil <- model_sizes(bma_results_dil)
+```
+
+
+The change in the prior distribution is more visible for the binomial-beta model prior.
+In panel b, the prior probability mass has decreased for larger models and increased for smaller models.
+However, this change is not uniform, as models characterized by the highest degree of multicollinearity are subject to the greatest penalty in terms of prior probability mass.
+
+Before moving to the BMA statistics, it is instructive to examine the change in the `dil.Par` parameter.
+```{r}
+
+bma_results_dil01 <- bma(
+  modelSpace = modelSpace,
+  round       = 3,
+  dilution    = 1,
+  dil.Par     = 0.1
+)
+size_graphs_dil01 <- model_sizes(bma_results_dil01)
+```
+
+
+As we can see, decreasing the value of $\omega$ diminishes the impact of dilution on the model prior.
+Conversely, raising the `dil.Par` parameter increases the degree of dilution.
+```{r}
+
+bma_results_dil2 <- bma(
+  modelSpace = modelSpace,
+  round       = 3,
+  dilution    = 1,
+  dil.Par     = 2
+)
+size_graphs_dil2 <- model_sizes(bma_results_dil2)
+```
+
+
+An especially strong impact can be seen for the binomial-beta prior.
+
+However, even after giving such priority to the penalty for multicollinearity,
+the main BMA statistics remain stable.
+```{r}
+
+bma_results_dil2[[2]]
+```
+
+
+As discussed in dilution_prior, the dilution prior proposed by @George+2010 is empirical in nature and, as such, departs from a strictly Bayesian framework. To address this concern, the present manuscript proposes a non-empirical alternative termed group dilution.
+
+Within the dataset considered here, three pairs of variables may plausibly capture the same underlying determinants of international trade: `ARABLE` and `ARABLEpw`, `LAND` and `LANDpc`, as well as `B` and `L`. The first two pairs are self-explanatory, as they represent level and per-worker/person transformations of the same underlying quantities. In the case of `B` and `L`, countries that share a common border are more likely to share a common language, suggesting potential informational overlap between these regressors.
+
+In order to implement group dilution, the user must provide two vectors. The first vector must have a length equal to the number of regressors. In this vector, a value of 0 indicates that a given regressor is not associated with any other regressor, that is, it does not represent the same underlying determinant as any other variable. Positive consecutive natural numbers indicate membership in a group of related regressors, namely those capturing the same underlying determinant. Consequently, for the case outlined in the previous paragraph:
+
+```{r}
+
+group_vec <- c(1,0,1,0,0,0,2,2,3,3)
+```
+
+
+The numerical indices can be displayed alongside the regressor names by executing:
+
+```{r}
+
+cbind(modelSpace[[1]],group_vec)
+```
+
+
+The second vector must have a length equal to the number of groups of related regressors. Each element of this vector specifies the dilution parameter associated with the corresponding group. If the researcher considers it unlikely that `B` and `L` represent the same underlying determinant, the dilution parameter for the group containing these variables may be set to 0.8. If, by contrast, the researcher regards the relationship between `ARABLE` and `ARABLEpw` as more probable, and the association between `LAND` and `LANDpc` as even stronger, the dilution parameters for these groups may be set to 0.6 and 0.4, respectively. Consequently, the dilution parameter vector is given by:
+
+```{r}
+
+par_vec <- c(0.8,0.6,0.4)
+```
+
+
+The results under the binomial model prior with group dilution can be obtained by executing:
+
+```{r}
+
+bma_results_dil3 <- bma(
+  modelSpace = modelSpace,
+  Narrative  = 1,
+  Nar_vec    = group_vec,
+  p          = par_vec,
+  round      = 3
+)
+bma_results_dil3[[1]]
+```
+
+
+For the binomial-beta with group dilution execute:
+```{r}
+
+bma_results_dil3[[2]]
+```
+
+
+Similarly to the dilution prior proposed by @George+2010, the application of the group dilution prior does not lead to any meaningful changes in the results. This finding suggests that multicollinearity does not constitute a substantive issue in the dataset under consideration.
+
+# Concluding remarks
+
+The manuscript introduces the `rmsBMA` package, which implements reduced model space Bayesian model averaging. This framework enables the user to conduct BMA and perform meaningful inference even in situations where the number of regressors exceeds the number of observations. By restricting the model space, a sufficient number of observations is preserved for reliable statistical inference, while the analysis remains focused on the most relevant determinants. To the best of our knowledge, this functionality is currently unique to the `rmsBMA` package.
+
+Another distinctive feature of the `rmsBMA` package is the newly introduced *group dilution* prior, which addresses the challenge of identifying robust determinants in the presence of multicollinearity. This approach enables users to specify dilution parameters for groups of variables associated with the same underlying theoretical construct. As a consequence, prior probabilities can be systematically adjusted for models that include multiple proxies capturing the same fundamental determinant. Moreover, the *group dilution* prior provides a non-empirical alternative to the dilution prior proposed by @George+2010. The latter is empirical in nature, as it relies on the correlation structure of the regressors and therefore departs from a fully Bayesian treatment of prior specification.
+
+Finally, the `rmsBMA` package enables users to specify a flexible class of $g$-priors, model priors, and dilution structures; compute jointness measures [@Doppelhofer+2009; @Ley+2007; @Hofmarcher+2018]; conduct Extreme Bounds Analysis; perform model selection procedures; and generate a comprehensive range of graphical outputs. These include visualizations of prior and posterior probabilities over the model space and model size, as well as histograms, kernel density estimates, weighted histograms of coefficients, and posterior density plots.
+
+Consequently, `rmsBMA` integrates functionalities that are not jointly available in existing R packages or alternative software environments, while also introducing original methodological contributions.
+
+# References

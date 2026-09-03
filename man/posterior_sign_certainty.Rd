@@ -69,22 +69,6 @@ The intercept is included in all models. For slope coefficients that are
 excluded from a given model, the contribution to \eqn{S_j} is set to
 \eqn{F_t(0)=0.5}, reflecting a symmetric distribution centered at zero.
 }
-\examples{
-\dontrun{
-out <- posterior_sign_certainty(
-  pmp_uniform = pmp_uniform,
-  pmp_random  = pmp_random,
-  betas       = betas,
-  VAR         = VAR,
-  DF          = DF,
-  Reg_ID      = Reg_ID
-)
-
-out$PSC_uniform
-out$PSC_random
-}
-
-}
 \references{
 Sala-i-Martin, X., Doppelhofer, G., and Miller, R. I. (2004).
 Determinants of long-term growth: A Bayesian averaging of classical estimates.

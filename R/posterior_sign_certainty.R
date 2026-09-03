@@ -63,21 +63,6 @@
 #' Jointness of growth determinants.
 #' \emph{Journal of Applied Econometrics}, 24(2), 209--244.
 #'
-#' @examples
-#' \dontrun{
-#' out <- posterior_sign_certainty(
-#'   pmp_uniform = pmp_uniform,
-#'   pmp_random  = pmp_random,
-#'   betas       = betas,
-#'   VAR         = VAR,
-#'   DF          = DF,
-#'   Reg_ID      = Reg_ID
-#' )
-#'
-#' out$PSC_uniform
-#' out$PSC_random
-#' }
-#'
 #' @export
 posterior_sign_certainty <- function(
     pmp_uniform,

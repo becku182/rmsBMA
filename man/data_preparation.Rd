@@ -82,12 +82,13 @@ After fixed-effects demeaning, an intercept term is redundant in subsequent
 linear regressions.
 }
 \examples{
-\dontrun{
+\donttest{
+df <- migration_panel
 # Standardization only (panel identifiers present but FE skipped)
 X <- data_preparation(
   df,
-  id = "Section",
-  time = "Time",
+  id = "Pair_ID",
+  time = "Year_0",
   fixed_effects = FALSE,
   standardize = TRUE
 )
@@ -95,8 +96,8 @@ X <- data_preparation(
 # Two-way fixed effects with standardization
 X <- data_preparation(
   df,
-  id = "Section",
-  time = "Time",
+  id = "Pair_ID",
+  time = "Year_0",
   fixed_effects = TRUE,
   effect = "twoway",
   standardize = TRUE
@@ -105,8 +106,8 @@ X <- data_preparation(
 # Section fixed effects only
 X <- data_preparation(
   df,
-  id = "Section",
-  time = "Time",
+  id = "Pair_ID",
+  time = "Year_0",
   fixed_effects = TRUE,
   effect = "section"
 )

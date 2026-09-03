@@ -87,7 +87,7 @@ g_regression <- function(data, g = "UIP") {
 
   # --- Crossproducts ---
   ZtZ <- crossprod(z)
-  if (det(ZtZ) == 0) stop("Determinant of Z'Z=0")
+  if (rcond(ZtZ) < .Machine$double.eps) stop("Determinant of Z'Z=0")
 
   ZtZ_inv <- solve(ZtZ)
   Zty <- crossprod(z, y)

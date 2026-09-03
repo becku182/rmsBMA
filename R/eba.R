@@ -39,13 +39,6 @@
 #' If a regressor is never included (no 1s in its column of \code{Reg_ID}), its row
 #' will contain \code{NA}.
 #'
-#' @examples
-#' \dontrun{
-#' eba_tbl <- eba_bounds(betas = betas, VAR = VAR, Reg_ID = Reg_ID)
-#' rownames(eba_tbl) <- c("Const", x_names)
-#' eba_tbl
-#' }
-#'
 #' @export
 eba <- function(betas, VAR, Reg_ID, var_tol = 0) {
   betas <- as.matrix(betas)

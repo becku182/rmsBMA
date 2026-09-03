@@ -64,7 +64,7 @@ g_regression_fast <- function(data, g = 0.5) {
 
   # --- Crossproducts ---
   ZtZ <- crossprod(z)
-  if (det(ZtZ) == 0) stop("Determinant of Z'Z=0")
+  if (rcond(ZtZ) < .Machine$double.eps) stop("Determinant of Z'Z=0")
 
   ZtZ_inv <- solve(ZtZ)
   Zty <- crossprod(z, y)

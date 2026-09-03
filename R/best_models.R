@@ -131,12 +131,5 @@ best_models <- function(bma_list, criterion = 1, best = 5, round = 3, estimate =
 
   out <- list(inclusion_table, models_std, inclusion_2,
               models_std_2, inclusion_3, models_std_3)
-
-  if (estimate==FALSE){
-    gridExtra::grid.table(inclusion_table)
-  }
-  if (estimate==TRUE){
-      gridExtra::grid.table(models_std)
-  }
   return(out)
 }

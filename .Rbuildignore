@@ -12,3 +12,9 @@
 ^vignettes/.*\.toc$
 ^vignettes/.*\.synctex\.gz$
 ^vignettes/Rplots\.pdf$
+^tools$
+^vignettes/rmsBMA\.Rnw$
+^\.positai$
+^\.claude$
+^man/figures$
+^Claude outputs$

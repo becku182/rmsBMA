@@ -83,8 +83,14 @@ jointness <- function(bma_list, measure = "HCGHM", rho = 0.5, round = 3){
     second <- Pab_R / (Na_b_R + a_Nb_R)
 
   } else if (measure == "DW") {
-    first  <- log((Pab_U / Na_b_U) * (Na_Nb_U / a_Nb_U))
-    second <- log((Pab_R / Na_b_R) * (Na_Nb_R / a_Nb_R))
+    # The four cell probabilities of the 2x2 inclusion table are non-negative
+    # by construction, but Na_Nb = 1 - Pa_i - Pa_j + Pab can come out very
+    # slightly negative through floating-point roundoff, which makes log()
+    # return NaN and emit a warning. Clamping at zero removes those spurious
+    # NaNs; genuine zero cells still yield the correct -Inf / Inf limits.
+    clamp <- function(x) pmax(x, 0)
+    first  <- log((clamp(Pab_U) / clamp(Na_b_U)) * (clamp(Na_Nb_U) / clamp(a_Nb_U)))
+    second <- log((clamp(Pab_R) / clamp(Na_b_R)) * (clamp(Na_Nb_R) / clamp(a_Nb_R)))
 
   } else if (measure == "PPI") {
     first  <- Pab_U
