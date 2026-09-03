@@ -9,6 +9,7 @@
 #' @return A matrix with ones indicating inclusion and zeros indicating inclusion
 #' of a regressor in a model
 #'
+#' @keywords internal
 
 model_matrix <- function(K, M) {
   stopifnot(M <= K)

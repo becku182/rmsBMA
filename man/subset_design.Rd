@@ -18,3 +18,4 @@ A matrix with regressors to be used in a specific model
 The function creates a matrix with regressors that should be included in a specific model
 based on inclusion vector
 }
+\keyword{internal}

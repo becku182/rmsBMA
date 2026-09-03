@@ -10,6 +10,7 @@
 #' g_regression and fast_ols function
 #'
 #'
+#' @keywords internal
 
 coef_to_full <- function(model_coefs, model_row) {
   model_coefs <- as.numeric(model_coefs)

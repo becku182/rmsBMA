@@ -19,3 +19,4 @@ of a regressor in a model
 The function creates a matrix with ones indicating inclusion and zeros indicating inclusion
 of a regressor in a model
 }
+\keyword{internal}

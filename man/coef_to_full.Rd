@@ -19,3 +19,4 @@ g_regression and fast_ols function
 The function extracts coefficients or standard errors from the results of
 g_regression and fast_ols function
 }
+\keyword{internal}

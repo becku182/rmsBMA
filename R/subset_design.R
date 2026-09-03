@@ -9,6 +9,7 @@
 #' @return A matrix with regressors to be used in a specific model
 #'
 #'
+#' @keywords internal
 subset_design <- function(x, model_row) {
   idx <- which(model_row != 0L)   # or == 1L
   x[, idx, drop = FALSE]

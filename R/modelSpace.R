@@ -40,5 +40,6 @@
 #' @seealso \code{\link{model_space}}
 #'
 #' @keywords datasets
+#' @docType data
 #' @name modelSpace
 NULL
