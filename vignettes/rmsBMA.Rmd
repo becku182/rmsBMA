@@ -449,6 +449,8 @@ $$
 
 Consequently, this test is extremely stringent, as even a single poorly specified model may lead to its failure---a situation analogous to a false negative result. Nevertheless, if a regressor passes this test, its robustness is difficult to question.
 
+Because the bounds are defined by the extreme estimates across *all* models considered, EBA requires the complete model space. It is therefore available only when the model space has been enumerated, and not when it has been explored by sampling; this is discussed further in the section on MC$^3$.
+
 # Data preparation
 
 This section demonstrates how to prepare the data for estimation. The first step involves installing the package and subsequently loading it into the R session.
@@ -534,7 +536,87 @@ For the reminder of the manuscript we are going to utilize smaller model space a
 modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
 ```
 
-The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list consisting of five components, comprising the full model space and additional elements required for subsequent use in the `bma` function.
+The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list consisting of five components, comprising the full model space and additional elements required for subsequent use in the `bma` function. When the model space is sampled rather than enumerated, a sixth component holding the chain diagnostics is added; this is described in the next section.
+
+## Sampling the model space: MC$^3$
+
+Exhaustive enumeration becomes impossible well before the number of candidate regressors becomes large. With $K$ regressors and $M = K$ there are $2^K$ models: $1{,}024$ for the ten regressors in `Trade_data_small`, $131{,}072$ for the seventeen in `Trade_data`, and over a million once $K$ reaches twenty. Restricting the model space to $M < K$ postpones the problem but does not remove it, since $\sum_{j=0}^{M}\binom{K}{j}$ still grows quickly; with $K = 100$ and $M = 7$ the reduced space already contains roughly $1.6 \times 10^{10}$ models.
+
+The standard remedy is to visit only the models that matter. Setting `mc3 = TRUE` replaces enumeration with Markov Chain Monte Carlo Model Composition [MC$^3$, @Madigan+1995; @Raftery+1997], a Metropolis--Hastings random walk over the model space. From the current model $\gamma$ a neighbour $\gamma'$ is proposed by adding or dropping a single regressor, chosen uniformly at random, and is accepted with probability
+
+$$
+\alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)}\right\}.
+$$
+
+Because the chain spends time in each model in proportion to its posterior probability, models with negligible posterior mass are simply never visited, and the cost of the exercise is governed by the number of models worth looking at rather than by the size of the space.
+
+Two arguments control the chain. `draws` is the number of retained draws, and `burn` is the number of initial draws discarded, so the chain runs for `draws + burn` iterations in total. If `burn` is not supplied it defaults to `draws`, giving a fifty per cent burn-in.
+
+```{r}
+set.seed(1)
+mc3Space <- model_space(Trade_data, mc3 = TRUE, draws = 50000, burn = 25000, g = "UIP")
+```
+
+Enumerating the same space takes about thirty seconds and estimates all $131{,}072$ models; the chain above takes roughly four seconds and finds the small number of models that carry essentially all of the posterior mass. From this point the object behaves exactly like an enumerated model space and is passed to `bma` in the usual way.
+
+```{r}
+mc3_results <- bma(mc3Space, EMS = 5, round = 4)
+mc3_results[[1]]
+```
+
+### Reading the chain diagnostics
+
+`model_space` reports several diagnostics when the chain finishes. The acceptance rate and the mean model size describe how the chain behaved; the number of distinct models visited indicates how concentrated the posterior is. The last line is the one that decides whether the run can be used at all:
+
+```{r}
+mc3Space[[6]]$cor_pmp
+```
+
+This is the correlation between two estimates of the same quantity. The first is analytic: for every visited model the posterior mass implied by its marginal likelihood and prior. The second is empirical: the frequency with which the chain actually visited that model. The two agree only once the chain has converged, so a value close to one indicates that the sampler has settled, while a lower value means the chain is too short and `draws` should be increased. Values below $0.99$ trigger a warning. The full set of diagnostics is available in the sixth element of the model space object, and is carried through to the sixteenth element of the `bma` object.
+
+```{r}
+str(mc3Space[[6]][c("draws", "burn", "acceptance", "cor_pmp", "mean_size", "space_size")])
+```
+
+### Verifying the sampler against enumeration
+
+Because `Trade_data_small` contains only ten regressors, its full model space of $1{,}024$ models can be enumerated exactly, which makes it possible to check the sampler against a known answer.
+
+```{r}
+exact_space <- model_space(Trade_data_small, M = 10, g = "UIP")
+exact_bma   <- bma(exact_space, EMS = 5, round = 6)
+
+set.seed(2)
+sampled_space <- model_space(Trade_data_small, mc3 = TRUE, draws = 50000,
+                             burn = 25000, g = "UIP")
+sampled_bma   <- bma(sampled_space, EMS = 5, round = 6)
+
+comparison <- cbind(Enumerated = exact_bma[[1]][, "PIP"],
+                    MC3        = sampled_bma[[1]][, "PIP"])
+round(comparison, 4)
+```
+
+The posterior inclusion probabilities agree to several decimal places, even though the chain visited only a small fraction of the $1{,}024$ available models. The models it skipped are precisely those whose posterior probability is too small to affect any of the reported quantities.
+
+### Restrictions
+
+Two restrictions apply to MC$^3$ in the current version of the package.
+
+**MC$^3$ is available only for the full model space.** Supplying `M` smaller than the total number of regressors together with `mc3 = TRUE` produces an error rather than a silently altered model space. The reason is that the proposal used above is symmetric only when $M = K$: every model then has exactly $K$ single-flip neighbours, so $q(\gamma' \mid \gamma) = q(\gamma \mid \gamma') = 1/K$ and the Hastings ratio equals one. Once $M < K$ this ceases to hold, because a model already containing $M$ regressors can only drop a variable and therefore has $M$ neighbours, while a smaller model has $K$. The acceptance probability then requires the correction
+
+$$
+\alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)} \cdot \frac{|\mathrm{nbd}(\gamma)|}{|\mathrm{nbd}(\gamma')|}\right\},
+$$
+
+and omitting it would bias the posterior towards models of size $M$ without producing any visible symptom. Reduced model space sampling is therefore deferred until that correction is implemented and verified.
+
+**Extreme Bounds Analysis is not available for a sampled model space.** Extreme bounds are defined by the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass. Bounds computed from a visited subset are therefore systematically too narrow, which makes a regressor appear more robust than it is. Since this failure is silent and always points in the same direction, EBA is withheld entirely rather than reported with a caveat: the third element of the `bma` object is `NULL` and a message explains why.
+
+```{r}
+is.null(mc3_results[[3]])
+```
+
+Dilution priors, by contrast, remain available. Model priors are applied after the chain has run, by reweighting the visited models, so no re-estimation is required. A warning is issued because the chain explored the space under a uniform model prior rather than under the dilution prior itself; the reweighting is dependable when dilution is mild, and less so when it strongly downweights the region the chain explored.
 
 # Performing Bayesian model averaging
 
