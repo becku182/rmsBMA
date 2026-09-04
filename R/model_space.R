@@ -15,13 +15,29 @@
 #' @param HC Logical indicator (default = FALSE) specifying whether a
 #' heteroscedasticity-consistent covariance matrix should be used
 #' for the estimation of standard errors (MacKinnon & White 1985).
+#' @param mc3 Logical (default = FALSE). If TRUE the model space is explored by
+#' MC^3 sampling (Madigan and York, 1995) instead of exhaustive enumeration,
+#' which makes large K feasible. Currently available only for the full model
+#' space (M = K); supplying M < K together with mc3 = TRUE is an error.
+#' Note that Extreme Bounds Analysis is not available for an MC^3 model space.
+#' @param draws Number of retained post-burn-in draws (default 10000). Total
+#' iterations are draws + burn. Used only when mc3 = TRUE.
+#' @param burn Number of initial draws discarded as burn-in (default: equal to
+#' draws). Used only when mc3 = TRUE.
 #'
 #' @return A list with model_space objects: \cr
 #' 1. x_names - vector with names of the regressors \cr
 #' 2. ols_results - table with the model space - contains ols objects for all the estimated models\cr
-#' 3. MS - size of the mode space \cr
+#' 3. MS - size of the model space; under mc3 = TRUE this is instead the number of DISTINCT MODELS VISITED \cr
 #' 4. M - maximum number of regressors in a model \cr
-#' 5. K- total number of regressors
+#' 5. K- total number of regressors \cr
+#' 6. mc3 - chain diagnostics (acceptance rate, visit counts, correlation
+#' between visit frequencies and analytic posterior mass, mean model size,
+#' size of the full space). Present only when mc3 = TRUE.
+#'
+#' @references
+#' Madigan, D. and York, J. (1995). Bayesian graphical models for discrete data.
+#' \emph{International Statistical Review}, 63(2), 215-232.
 #'
 #' @export
 #'
@@ -37,14 +53,20 @@
 #' data <- cbind(y,x1,x2,x3,x4,x5,x6)
 #' modelSpace <- model_space(data, M = 3)
 #'
+#' # MC^3 sampling of the full model space
+#' sampled <- model_space(data, mc3 = TRUE, draws = 2000, burn = 1000)
+#' sampled[[6]]$acceptance
+#'
 
-model_space=function(data, M = NULL, g = "UIP", HC = FALSE){
+model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
+                     mc3 = FALSE, draws = NULL, burn = NULL){
 
   # collecting data characteristics
   m <- nrow(data) # number of rows in the data
   n <- ncol(data) # number of columns in the data
   K <- n - 1 # number of regressors
 
+  M_supplied <- !is.null(M)
   # What to do if M is not set by the user
   if (is.null(M)){M <- K}
 
@@ -62,6 +84,90 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE){
 
   # Total number of models considered
   MS <- sum(choose(K, 0:M))
+
+  ## ---- validation, g resolution, and the MC^3 path ------------------------
+
+  if (!is.logical(HC) || length(HC) != 1 || is.na(HC)) {
+    stop("Argument 'HC' must be a single logical value (TRUE or FALSE).")
+  }
+  if (!is.logical(mc3) || length(mc3) != 1 || is.na(mc3)) {
+    stop("Argument 'mc3' must be a single logical value (TRUE or FALSE).")
+  }
+
+  # 'draws' and 'burn' tune the sampler; they never switch it on by themselves.
+  # Silently moving a user from exact enumeration to sampling would change the
+  # inference with no signal at all, so a stray 'draws' is an error, not a hint.
+  if (!mc3 && (!is.null(draws) || !is.null(burn))) {
+    stop("'draws' and 'burn' apply only when mc3 = TRUE. ",
+         "Set mc3 = TRUE to sample the model space.")
+  }
+
+  g_none <- identical(g, "None")
+  if (!g_none) {
+    if (is.null(g) || identical(g, "UIP")) {
+      g <- 1 / m
+    } else if (identical(g, "RIC")) {
+      g <- 1 / (K^2)
+    } else if (identical(g, "Benchmark")) {
+      g <- 1 / max(m, (K^2))
+    } else if (identical(g, "HQ")) {
+      g <- 1 / (log(m)^3)
+    } else if (identical(g, "rootUIP")) {
+      g <- sqrt(1 / m)
+    } else if (is.numeric(g)) {
+      if (length(g) != 1 || !is.finite(g) || g <= 0)
+        stop("g must be strictly positive")
+    } else {
+      g <- 1 / m
+    }
+  }
+
+  if (mc3) {
+    # MC^3 is currently implemented only for the full model space. With M < K
+    # every model of size M has only M single-flip neighbours (drops) while
+    # smaller models have K, so the proposal stops being symmetric and the
+    # acceptance ratio needs a |nbd(g)|/|nbd(g')| correction that is not yet
+    # in place. Overriding a user-supplied M silently would change the
+    # inference without warning, so this is an error.
+    if (M_supplied && M < K) {
+      stop("MC3 is currently available only for the full model space (M = K). ",
+           "Constrained MC3 (M < K) requires a proposal correction that is ",
+           "not yet implemented. Either omit 'M' or set M = K.")
+    }
+    if (!M_supplied) {
+      M <- K
+      message("mc3 = TRUE: sampling the full model space (M = K).")
+    }
+
+    if (is.null(draws)) draws <- 10000L
+    if (is.null(burn))  burn  <- draws          # 50% burn-in by default
+    draws <- suppressWarnings(as.integer(draws))
+    burn  <- suppressWarnings(as.integer(burn))
+    if (is.na(draws) || draws < 1L)  stop("'draws' must be a positive integer.")
+    if (is.na(burn)  || burn  < 0L)  stop("'burn' must be a non-negative integer.")
+
+    fit <- mc3_sample(y, x, K, draws = draws, burn = burn,
+                      g_none = g_none, g_val = g, HC = HC)
+
+    ols_results <- fit$ols_results
+    colnames(ols_results) <- model_space_colnames(x_names, K)
+
+    mc3_info <- list(method     = "mc3",
+                     draws      = draws,
+                     burn       = burn,
+                     acceptance = fit$acceptance,
+                     cor_pmp    = fit$cor_pmp,
+                     visits     = fit$visits,
+                     mean_size  = fit$mean_size,
+                     space_size = MS)
+
+    # Element 3 is now the number of DISTINCT MODELS VISITED, not the size of
+    # the model space. The full space size is kept in mc3_info$space_size.
+    out <- list(x_names, ols_results, fit$n_models, M, K, mc3_info)
+    return(out)
+  }
+  ## ---- end MC^3 path ------------------------------------------------------
+
 
   id_matrix <- model_matrix(K,M)
   for_results <- matrix(0, nrow = MS, ncol = 2*K+6)
@@ -183,17 +289,9 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE){
   }
 
 
-  # NAMES of objects in the ols_results TABLE
-  Betas <- matrix(0, nrow = K, ncol = 1)
-  SEs <- matrix(0, nrow = K, ncol = 1)
-  for (k in 1:K){
-    Betas[k,1] = paste0("Coef_", x_names[k])
-    SEs[k,1] = paste0("SE_",  x_names[k])
-  }
-  Betas = rbind("Coef_Const", Betas)
-  SEs = rbind("SE_Const", SEs)
-
-  colnames(ols_results) <- rbind(matrix(x_names, nrow = K, ncol = 1),Betas, SEs, matrix(c("log_like", "R^2", "DF", "Dilut"), nrow = 4, ncol =1))
+  # NAMES of objects in the ols_results TABLE.
+  # Shared with the MC^3 path so the two cannot drift apart.
+  colnames(ols_results) <- model_space_colnames(x_names, K)
 
   out<-list(x_names,ols_results,MS,M,K) # we create a model_space object
 

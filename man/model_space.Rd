@@ -4,7 +4,15 @@
 \alias{model_space}
 \title{Calculation of the model space}
 \usage{
-model_space(data, M = NULL, g = "UIP", HC = FALSE)
+model_space(
+  data,
+  M = NULL,
+  g = "UIP",
+  HC = FALSE,
+  mc3 = FALSE,
+  draws = NULL,
+  burn = NULL
+)
 }
 \arguments{
 \item{data}{Data set to work with. The first column is the data for the dependent variable, and the other columns is the data for the regressors.}
@@ -23,15 +31,30 @@ In this case the marginal likelihood is calculated according to formula proposed
 \item{HC}{Logical indicator (default = FALSE) specifying whether a
 heteroscedasticity-consistent covariance matrix should be used
 for the estimation of standard errors (MacKinnon & White 1985).}
+
+\item{mc3}{Logical (default = FALSE). If TRUE the model space is explored by
+MC^3 sampling (Madigan and York, 1995) instead of exhaustive enumeration,
+which makes large K feasible. Currently available only for the full model
+space (M = K); supplying M < K together with mc3 = TRUE is an error.
+Note that Extreme Bounds Analysis is not available for an MC^3 model space.}
+
+\item{draws}{Number of retained post-burn-in draws (default 10000). Total
+iterations are draws + burn. Used only when mc3 = TRUE.}
+
+\item{burn}{Number of initial draws discarded as burn-in (default: equal to
+draws). Used only when mc3 = TRUE.}
 }
 \value{
 A list with model_space objects: \cr
 \enumerate{
 \item x_names - vector with names of the regressors \cr
 \item ols_results - table with the model space - contains ols objects for all the estimated models\cr
-\item MS - size of the mode space \cr
+\item MS - size of the model space; under mc3 = TRUE this is instead the number of DISTINCT MODELS VISITED \cr
 \item M - maximum number of regressors in a model \cr
-\item K- total number of regressors
+\item K- total number of regressors \cr
+\item mc3 - chain diagnostics (acceptance rate, visit counts, correlation
+between visit frequencies and analytic posterior mass, mean model size,
+size of the full space). Present only when mc3 = TRUE.
 }
 }
 \description{
@@ -49,4 +72,12 @@ y <- 2 + x1 + 2*x2 + e
 data <- cbind(y,x1,x2,x3,x4,x5,x6)
 modelSpace <- model_space(data, M = 3)
 
+# MC^3 sampling of the full model space
+sampled <- model_space(data, mc3 = TRUE, draws = 2000, burn = 1000)
+sampled[[6]]$acceptance
+
+}
+\references{
+Madigan, D. and York, J. (1995). Bayesian graphical models for discrete data.
+\emph{International Statistical Review}, 63(2), 215-232.
 }
