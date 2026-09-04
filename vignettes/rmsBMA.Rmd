@@ -564,6 +564,14 @@ mc3_results <- bma(mc3Space, EMS = 5, round = 4)
 mc3_results[[1]]
 ```
 
+One element of that object is missing. Extreme bounds are the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass, so bounds computed from a visited subset are systematically too narrow --- which makes a regressor appear more robust than it is. Because that failure is silent and always points the same way, Extreme Bounds Analysis is withheld rather than reported with a caveat.
+
+```{r}
+is.null(mc3_results[[3]])
+```
+
+Dilution priors, by contrast, remain available, since model priors are applied after the chain has run by reweighting the visited models. A warning notes that the chain explored under a uniform model prior, so the reweighting is dependable when dilution is mild and less so otherwise.
+
 ### Chain diagnostics
 
 `model_space` reports the acceptance rate, the mean model size, the number of distinct models visited, and one figure that decides whether the run can be used at all.
@@ -578,7 +586,23 @@ A second warning fires when the acceptance rate falls below two per cent. `cor_p
 
 ### Reduced model spaces
 
-Under $|\gamma| \le M$ the neighbourhood is not of constant size. A model with $r < M$ regressors admits $K - r$ additions and $r$ deletions, hence $K$ neighbours, while one already holding $M$ can only delete and so has $M$. The proposal is therefore asymmetric, which is what the Hastings factor in the acceptance probability above corrects. Omitting that factor raises no error but changes the target to something proportional to $p(\gamma \mid y)\,|\mathrm{nbd}(\gamma)|$: boundary models carry the smaller neighbourhood, so they lose mass and inference drifts towards models smaller than $M$. The correction is applied automatically, and equals one when $M = K$.
+Under $|\gamma| \le M$ the neighbourhood is not of constant size. A model of size $r$ admits $K - r$ additions and $r$ deletions while $r < M$, but one already holding $M$ regressors can only delete:
+
+$$
+|\mathrm{nbd}(\gamma)| =
+\begin{cases}
+  K, & r < M, \\
+  M, & r = M.
+\end{cases}
+$$
+
+The proposal is therefore asymmetric, and the Hastings factor in the acceptance probability above is what corrects it. Omitting that factor raises no error. It changes the distribution the chain converges to, from $p(\gamma \mid y)$ to
+
+$$
+\tilde{p}(\gamma \mid y) \;\propto\; p(\gamma \mid y)\,\bigl|\mathrm{nbd}(\gamma)\bigr|,
+$$
+
+and since boundary models carry the smaller neighbourhood, they are the ones that lose mass: inference drifts towards models smaller than $M$. The correction is applied automatically, and equals one when $M = K$.
 
 ### Checking the sampler against enumeration
 
@@ -607,17 +631,6 @@ bm_uncor <- bm_exact * 5 / sum(exact_bma[[10]][, 11] * nbd_size)
 ```
 
 The inclusion probabilities agree to four decimal places while the chain visits `r sampled_red[[3]]` of the $638$ models. The correction shows up in the posterior mass at the boundary $r = M$, which enumeration puts at `r round(bm_exact, 3)` and the sampler at `r round(bm_mc3, 3)`. Without it the chain would converge to `r round(bm_uncor, 3)` instead --- an error that would be invisible in any output the package produces.
-
-### Extreme Bounds Analysis
-
-Extreme bounds are the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass. Bounds computed from a visited subset are systematically too narrow, which makes a regressor appear more robust than it is. Because that failure is silent and always points the same way, EBA is withheld rather than reported with a caveat: the third element of the `bma` object is `NULL`.
-
-```{r}
-is.null(mc3_results[[3]])
-```
-
-Dilution priors, by contrast, remain available, since model priors are applied after the chain has run by reweighting the visited models. A warning notes that the chain explored under a uniform model prior, so the reweighting is dependable when dilution is mild and less so when it strongly downweights the region explored.
-
 
 # Performing Bayesian model averaging
 

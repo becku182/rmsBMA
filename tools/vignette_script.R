@@ -134,6 +134,8 @@ mc3Space <- model_space(Trade_data, mc3 = TRUE, draws = 50000, burn = 25000, g =
 mc3_results <- bma(mc3Space, EMS = 5, round = 4)
 mc3_results[[1]]
 
+is.null(mc3_results[[3]])
+
 
 ## ---- Chain diagnostics ---------------------------------------------------
 section("Chain diagnostics")
@@ -158,12 +160,6 @@ sampled_bma <- bma(sampled_red, EMS = 5, round = 6)
 
 round(cbind(Enumerated = exact_bma[[1]][, "PIP"],
             MC3        = sampled_bma[[1]][, "PIP"]), 4)
-
-
-## ---- Extreme Bounds Analysis ---------------------------------------------
-section("Extreme Bounds Analysis")
-
-is.null(mc3_results[[3]])
 
 
 ###############################################################################
