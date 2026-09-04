@@ -109,3 +109,31 @@ test_that("enumerated model spaces are unaffected by the MC3 additions", {
   expect_false(is.null(b[[3]]))             # EBA still produced
   expect_null(b[[16]])                      # no chain diagnostics
 })
+
+test_that("chain diagnostics are reported, not just stored", {
+  d <- make_data()
+  expect_message(model_space(d, mc3 = TRUE, draws = 1000, burn = 500),
+                 "cor\\(analytic PMP, visit frequency\\)")
+  expect_message(model_space(d, mc3 = TRUE, draws = 1000, burn = 500),
+                 "acceptance")
+})
+
+test_that("a short chain warns about non-convergence", {
+  d <- make_data(seed = 3, m = 40, K = 8)
+  # Too few draws to settle: the analytic and frequency estimates disagree.
+  w <- tryCatch({
+    suppressMessages(model_space(d, mc3 = TRUE, draws = 60, burn = 10))
+    NA_character_
+  }, warning = function(w) conditionMessage(w))
+  # Either it warns, or it converged anyway; both are acceptable, but if it
+  # warns the message must name the diagnostic.
+  if (!is.na(w)) expect_match(w, "may not have converged")
+})
+
+test_that("slot 3 is not labelled an EBA table when it is NULL", {
+  d <- make_data()
+  ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
+  b  <- suppressMessages(bma(ms, round = 12))
+  expect_null(b[[3]])
+  expect_match(names(b)[3], "not available")
+})

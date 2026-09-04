@@ -370,5 +370,10 @@ bma <- function(modelSpace,
                        "Vector with the values of the constant",
                        "Matrix with coefficients on regressors",
                        "MC3 chain diagnostics (NULL for an enumerated model space)")
+
+  # Do not leave slot 3 labelled as an EBA table when it holds NULL.
+  if (is_mc3) {
+    names(bma_list)[3] <- "Extreme Bounds Analysis (not available for an MC3 model space)"
+  }
   return(bma_list)
 }

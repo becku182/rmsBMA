@@ -161,6 +161,27 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
                      mean_size  = fit$mean_size,
                      space_size = MS)
 
+    # Report the chain diagnostics. These decide whether the run is usable at
+    # all, so they are shown by default rather than left for the user to dig
+    # out of the returned object.
+    message(sprintf(
+      paste0("MC3: %d draws after %d burn-in | acceptance %.3f | ",
+             "%d distinct models visited | mean model size %.2f\n",
+             "MC3: cor(analytic PMP, visit frequency) = %s"),
+      draws, burn, fit$acceptance, fit$n_models, fit$mean_size,
+      if (is.na(fit$cor_pmp)) "NA (too few models)" else sprintf("%.4f", fit$cor_pmp)))
+
+    # The correlation between the analytic posterior mass and the visit
+    # frequencies is the convergence check: the two estimate the same thing
+    # and agree only once the chain has settled. A low value means the run is
+    # too short, not that the model is wrong.
+    if (!is.na(fit$cor_pmp) && fit$n_models >= 10L && fit$cor_pmp < 0.99) {
+      warning(sprintf(
+        paste0("MC3 may not have converged: cor(analytic PMP, visit frequency) ",
+               "= %.4f, below 0.99. Increase 'draws'."), fit$cor_pmp),
+        call. = FALSE)
+    }
+
     # Element 3 is now the number of DISTINCT MODELS VISITED, not the size of
     # the model space. The full space size is kept in mc3_info$space_size.
     out <- list(x_names, ols_results, fit$n_models, M, K, mc3_info)
