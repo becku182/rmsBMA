@@ -6,3 +6,4 @@
 .quarto
 .positai
 Claude outputs/
+_stage*.tar.gz

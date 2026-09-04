@@ -18,3 +18,4 @@
 ^\.claude$
 ^man/figures$
 ^Claude outputs$
+^_stage.*\.tar\.gz$
