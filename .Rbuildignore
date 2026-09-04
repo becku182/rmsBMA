@@ -1,0 +1,20 @@
+^rmsBMA_work\.Rproj$
+^\.Rproj\.user$
+^LICENSE\.md$
+^README\.Rmd$
+^\.github$
+^README\.md$
+^CRAN-SUBMISSION$
+^cran-comments\.md$
+^vignettes/.*\.pdf$
+^vignettes/.*\.log$
+^vignettes/.*\.tex$
+^vignettes/.*\.toc$
+^vignettes/.*\.synctex\.gz$
+^vignettes/Rplots\.pdf$
+^tools$
+^vignettes/rmsBMA\.Rnw$
+^\.positai$
+^\.claude$
+^man/figures$
+^Claude outputs$
