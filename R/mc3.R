@@ -15,13 +15,16 @@ mc3_key <- function(incl) paste0(as.integer(incl), collapse = "")
 #' Mirrors exactly what model_space() writes for a single model, so that a row
 #' produced here is indistinguishable from the corresponding enumerated row.
 #' The layout of the returned vector (length 3K + 6) is:
-#'   [1:K]              inclusion indicators
-#'   [(K+1):(2K+1)]     coefficients (constant first)
-#'   [(2K+2):(3K+2)]    standard errors (constant first)
-#'   [3K+3]             log marginal likelihood
-#'   [3K+4]             R^2
-#'   [3K+5]             degrees of freedom
-#'   [3K+6]             dilution-prior term
+#'
+#' ```
+#'   1:K              inclusion indicators
+#'   (K+1):(2K+1)     coefficients (constant first)
+#'   (2K+2):(3K+2)    standard errors (constant first)
+#'   3K+3             log marginal likelihood
+#'   3K+4             R^2
+#'   3K+5             degrees of freedom
+#'   3K+6             dilution-prior term
+#' ```
 #'
 #' @param y response, as a one-column matrix
 #' @param x matrix of all K candidate regressors

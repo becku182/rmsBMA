@@ -17,7 +17,6 @@ Description: Implements Bayesian model averaging for settings with many
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Suggests:
     testthat (>= 3.0.0),
     knitr,
@@ -37,3 +36,4 @@ Depends:
     R (>= 3.5.0)
 LazyData: true
 Language: en-US
+Config/roxygen2/version: 8.1.0
