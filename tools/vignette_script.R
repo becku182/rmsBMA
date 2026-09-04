@@ -135,70 +135,33 @@ mc3_results <- bma(mc3Space, EMS = 5, round = 4)
 mc3_results[[1]]
 
 
-## ---- Reading the chain diagnostics ---------------------------------------
-section("Reading the chain diagnostics")
-
-mc3Space[[6]]$cor_pmp
+## ---- Chain diagnostics ---------------------------------------------------
+section("Chain diagnostics")
 
 str(mc3Space[[6]][c("draws", "burn", "acceptance", "cor_pmp", "mean_size", "space_size")])
 
 
-## ---- Sampling a reduced model space --------------------------------------
-section("Sampling a reduced model space")
+## ---- Reduced model spaces ------------------------------------------------
+section("Reduced model spaces")
 
 
-## ---- Verifying the sampler against enumeration ---------------------------
-section("Verifying the sampler against enumeration")
+## ---- Checking the sampler against enumeration ----------------------------
+section("Checking the sampler against enumeration")
 
-exact_space <- model_space(Trade_data_small, M = 10, g = "UIP")
-exact_bma   <- bma(exact_space, EMS = 5, round = 6)
-
-set.seed(2)
-sampled_space <- model_space(Trade_data_small, mc3 = TRUE, draws = 50000,
-                             burn = 25000, g = "UIP")
-sampled_bma   <- bma(sampled_space, EMS = 5, round = 6)
-
-comparison <- cbind(Enumerated = exact_bma[[1]][, "PIP"],
-                    MC3        = sampled_bma[[1]][, "PIP"])
-round(comparison, 4)
-
-exact_red <- model_space(Trade_data_small, M = 5, g = "UIP")
-exact_red_bma <- bma(exact_red, EMS = 5, round = 6)
+exact_red   <- model_space(Trade_data_small, M = 5, g = "UIP")
+exact_bma   <- bma(exact_red, EMS = 5, round = 6)
 
 set.seed(4)
-sampled_red <- model_space(Trade_data_small, M = 5, mc3 = TRUE, draws = 50000,
-                           burn = 25000, g = "UIP")
-sampled_red_bma <- bma(sampled_red, EMS = 5, round = 6)
+sampled_red <- model_space(Trade_data_small, M = 5, mc3 = TRUE,
+                           draws = 50000, burn = 25000, g = "UIP")
+sampled_bma <- bma(sampled_red, EMS = 5, round = 6)
 
-round(cbind(Enumerated = exact_red_bma[[1]][, "PIP"],
-            MC3        = sampled_red_bma[[1]][, "PIP"]), 4)
-
-mass_by_size <- function(weights, tab, K, M) {
-  m <- tapply(weights, rowSums(tab[, seq_len(K), drop = FALSE]), sum)
-  # a sampler need not visit every size, so align on a common 0..M index
-  out <- setNames(numeric(M + 1), as.character(0:M))
-  out[names(m)] <- m
-  out
-}
-
-exact_mass <- mass_by_size(exact_red_bma[[10]][, 11], exact_red_bma[[10]], 10, 5)
-mc3_mass   <- mass_by_size(sampled_red[[6]]$visits / sum(sampled_red[[6]]$visits),
-                           sampled_red_bma[[10]], 10, 5)
-
-round(rbind(Enumerated = exact_mass, MC3 = mc3_mass), 4)
-
-nbd <- ifelse(as.integer(names(exact_mass)) < 5, 10, 5)   # K = 10, M = 5
-boundary <- nbd == 5
-c(exact       = unname(sum(exact_mass[boundary])),
-  uncorrected = unname(sum(exact_mass[boundary] * 5) / sum(exact_mass * nbd)))
+round(cbind(Enumerated = exact_bma[[1]][, "PIP"],
+            MC3        = sampled_bma[[1]][, "PIP"]), 4)
 
 
-## ---- When the chain barely moves -----------------------------------------
-section("When the chain barely moves")
-
-
-## ---- Extreme Bounds Analysis is not available for a sampled model space ----
-section("Extreme Bounds Analysis is not available for a sampled model space")
+## ---- Extreme Bounds Analysis ---------------------------------------------
+section("Extreme Bounds Analysis")
 
 is.null(mc3_results[[3]])
 
