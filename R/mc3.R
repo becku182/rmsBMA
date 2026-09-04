@@ -86,7 +86,9 @@ mc3_fit_row <- function(y, x, incl, K, g_none, g_val, HC) {
 #' q(g' | g) = 1 / |nbd(g)|, the Metropolis-Hastings ratio carries the factor
 #' |nbd(g)| / |nbd(g')| and the acceptance probability is
 #'
-#'   min{ 1, [p(y|g') p(g')] / [p(y|g) p(g)] * |nbd(g)| / |nbd(g')| }.
+#' ```
+#'   min{ 1, (p(y|g') p(g')) / (p(y|g) p(g)) * |nbd(g)| / |nbd(g')| }
+#' ```
 #'
 #' Dropping that factor does not produce an error, it silently changes the
 #' target: the uncorrected chain converges to a distribution proportional to

@@ -34,9 +34,10 @@ for the estimation of standard errors (MacKinnon & White 1985).}
 
 \item{mc3}{Logical (default = FALSE). If TRUE the model space is explored by
 MC^3 sampling (Madigan and York, 1995) instead of exhaustive enumeration,
-which makes large K feasible. Currently available only for the full model
-space (M = K); supplying M < K together with mc3 = TRUE is an error.
-Note that Extreme Bounds Analysis is not available for an MC^3 model space.}
+which makes large K feasible. Reduced model spaces (M < K) are supported:
+the sampler applies the proposal correction that the size constraint
+requires. Note that Extreme Bounds Analysis is not available for an MC^3
+model space.}
 
 \item{draws}{Number of retained post-burn-in draws (default 10000). Total
 iterations are draws + burn. Used only when mc3 = TRUE.}
