@@ -17,9 +17,10 @@
 #' for the estimation of standard errors (MacKinnon & White 1985).
 #' @param mc3 Logical (default = FALSE). If TRUE the model space is explored by
 #' MC^3 sampling (Madigan and York, 1995) instead of exhaustive enumeration,
-#' which makes large K feasible. Currently available only for the full model
-#' space (M = K); supplying M < K together with mc3 = TRUE is an error.
-#' Note that Extreme Bounds Analysis is not available for an MC^3 model space.
+#' which makes large K feasible. Reduced model spaces (M < K) are supported:
+#' the sampler applies the proposal correction that the size constraint
+#' requires. Note that Extreme Bounds Analysis is not available for an MC^3
+#' model space.
 #' @param draws Number of retained post-burn-in draws (default 10000). Total
 #' iterations are draws + burn. Used only when mc3 = TRUE.
 #' @param burn Number of initial draws discarded as burn-in (default: equal to
@@ -123,20 +124,14 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
   }
 
   if (mc3) {
-    # MC^3 is currently implemented only for the full model space. With M < K
-    # every model of size M has only M single-flip neighbours (drops) while
-    # smaller models have K, so the proposal stops being symmetric and the
-    # acceptance ratio needs a |nbd(g)|/|nbd(g')| correction that is not yet
-    # in place. Overriding a user-supplied M silently would change the
-    # inference without warning, so this is an error.
-    if (M_supplied && M < K) {
-      stop("MC3 is currently available only for the full model space (M = K). ",
-           "Constrained MC3 (M < K) requires a proposal correction that is ",
-           "not yet implemented. Either omit 'M' or set M = K.")
+    # Reduced model spaces are supported: mc3_sample() applies the
+    # |nbd(g)|/|nbd(g')| proposal correction that M < K requires.
+    if (M < 1) {
+      stop("MC3 requires M >= 1. A model space with M = 0 contains only the ",
+           "null model and needs no sampling.")
     }
     if (!M_supplied) {
-      M <- K
-      message("mc3 = TRUE: sampling the full model space (M = K).")
+      message("mc3 = TRUE: sampling the full model space (M = K = ", K, ").")
     }
 
     if (is.null(draws)) draws <- 10000L
@@ -146,7 +141,7 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
     if (is.na(draws) || draws < 1L)  stop("'draws' must be a positive integer.")
     if (is.na(burn)  || burn  < 0L)  stop("'burn' must be a non-negative integer.")
 
-    fit <- mc3_sample(y, x, K, draws = draws, burn = burn,
+    fit <- mc3_sample(y, x, K, M, draws = draws, burn = burn,
                       g_none = g_none, g_val = g, HC = HC)
 
     ols_results <- fit$ols_results
@@ -165,10 +160,10 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
     # all, so they are shown by default rather than left for the user to dig
     # out of the returned object.
     message(sprintf(
-      paste0("MC3: %d draws after %d burn-in | acceptance %.3f | ",
-             "%d distinct models visited | mean model size %.2f\n",
-             "MC3: cor(analytic PMP, visit frequency) = %s"),
-      draws, burn, fit$acceptance, fit$n_models, fit$mean_size,
+      paste0("MC3: M = %d of K = %d | %d draws after %d burn-in | ",
+             "acceptance %.3f | %d distinct models visited | ",
+             "mean model size %.2f\nMC3: cor(analytic PMP, visit frequency) = %s"),
+      M, K, draws, burn, fit$acceptance, fit$n_models, fit$mean_size,
       if (is.na(fit$cor_pmp)) "NA (too few models)" else sprintf("%.4f", fit$cor_pmp)))
 
     # The correlation between the analytic posterior mass and the visit
@@ -179,6 +174,23 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
       warning(sprintf(
         paste0("MC3 may not have converged: cor(analytic PMP, visit frequency) ",
                "= %.4f, below 0.99. Increase 'draws'."), fit$cor_pmp),
+        call. = FALSE)
+    }
+
+    # A chain that almost never moves has explored almost nothing, however
+    # well the visited models agree among themselves. This happens when the
+    # posterior is very concentrated, and especially at the M boundary, where
+    # only deletions are proposed: reaching a different model of size M
+    # requires first accepting a worse smaller model.
+    if (fit$acceptance < 0.02) {
+      warning(sprintf(
+        paste0("MC3 accepted only %.3f of proposals and visited %d distinct ",
+               "models. The chain barely moved, so the visited set may be a ",
+               "poor picture of the model space even though its diagnostics ",
+               "look good%s."),
+        fit$acceptance, fit$n_models,
+        if (M < K) ", and at the M boundary only deletions are proposed"
+        else ""),
         call. = FALSE)
     }
 

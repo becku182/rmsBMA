@@ -18,15 +18,19 @@ test_that("draws and burn never switch the method on by themselves", {
   expect_error(model_space(d, burn = 100),         "only when mc3 = TRUE")
 })
 
-test_that("MC3 refuses a constrained model space rather than overriding M", {
+test_that("MC3 accepts any admissible M", {
   d <- make_data()
-  expect_error(model_space(d, M = 3, mc3 = TRUE, draws = 100, burn = 50),
-               "full model space")
+  # Reduced model spaces are supported; the sampler corrects the proposal.
+  expect_silent(suppressWarnings(suppressMessages(
+    model_space(d, M = 3, mc3 = TRUE, draws = 200, burn = 100))))
   # M = K is fine, and so is omitting M
-  expect_silent(suppressMessages(
-    model_space(d, M = 6, mc3 = TRUE, draws = 200, burn = 100)))
-  expect_message(model_space(d, mc3 = TRUE, draws = 200, burn = 100),
-                 "full model space")
+  expect_silent(suppressWarnings(suppressMessages(
+    model_space(d, M = 6, mc3 = TRUE, draws = 200, burn = 100))))
+  expect_message(suppressWarnings(
+    model_space(d, mc3 = TRUE, draws = 200, burn = 100)), "full model space")
+  # M = 0 leaves only the null model and needs no sampling
+  expect_error(model_space(d, M = 0, mc3 = TRUE, draws = 100, burn = 50),
+               "requires M")
 })
 
 test_that("MC3 returns the documented structure", {
@@ -136,4 +140,58 @@ test_that("slot 3 is not labelled an EBA table when it is NULL", {
   b  <- suppressMessages(bma(ms, round = 12))
   expect_null(b[[3]])
   expect_match(names(b)[3], "not available")
+})
+
+test_that("constrained MC3 (M < K) only visits admissible models", {
+  d <- make_data(); K <- 6; M <- 3
+  ms <- suppressWarnings(suppressMessages(
+    model_space(d, M = M, mc3 = TRUE, draws = 5000, burn = 1000)))
+  sizes <- rowSums(ms[[2]][, 1:K, drop = FALSE])
+  expect_true(all(sizes <= M))
+  expect_equal(ms[[4]], M)
+})
+
+test_that("constrained MC3 reproduces the exact constrained posterior", {
+  skip_on_cran()
+  # Diffuse signal so posterior mass sits on both sides of the M boundary;
+  # this is where the |nbd(g)|/|nbd(g')| correction actually matters.
+  set.seed(4)
+  m <- 60; K <- 7; M <- 3
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 0.45*X[,1] + 0.35*X[,2] + 0.25*X[,3] + stats::rnorm(m, sd = 1.6)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+
+  b_e <- bma(model_space(d, M = M, g = "UIP"), EMS = K/2, round = 12)
+  set.seed(21)
+  ms  <- suppressWarnings(suppressMessages(
+    model_space(d, M = M, mc3 = TRUE, draws = 200000, burn = 20000, g = "UIP")))
+  b_m <- suppressMessages(bma(ms, EMS = K/2, round = 12))
+
+  ex <- data.frame(k = model_keys(b_e[[10]], K), pmp = b_e[[10]][, K+1],
+                   stringsAsFactors = FALSE)
+  mc <- data.frame(k = model_keys(b_m[[10]], K),
+                   freq = ms[[6]]$visits / sum(ms[[6]]$visits),
+                   stringsAsFactors = FALSE)
+  j <- merge(ex, mc, by = "k")
+
+  expect_lt(0.5 * sum(abs(j$pmp - j$freq)), 0.03)   # total variation
+
+  # The mass at the boundary is what the correction fixes: without it this
+  # ratio collapses towards M/K rather than sitting at 1.
+  r <- vapply(j$k, function(s) sum(as.integer(strsplit(s, "")[[1]])), 0)
+  expect_equal(sum(j$freq[r == M]) / sum(j$pmp[r == M]), 1, tolerance = 0.05)
+
+  expect_equal(unname(b_e[[1]][-1, "PIP"]), unname(b_m[[1]][-1, "PIP"]),
+               tolerance = 2e-2)
+})
+
+test_that("a barely-moving chain is flagged", {
+  # Strong signal with the mode exactly at the boundary: the chain sticks.
+  set.seed(11); m <- 60; K <- 8
+  X <- matrix(stats::rnorm(m*K), m, K)
+  y <- 2 + 1.5*X[,1] - X[,2] + 0.7*X[,3] + stats::rnorm(m, sd = 1)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  expect_warning(suppressMessages(
+    model_space(d, M = 3, mc3 = TRUE, draws = 5000, burn = 1000, g = "UIP")),
+    "barely moved")
 })

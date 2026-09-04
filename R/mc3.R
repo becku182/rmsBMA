@@ -68,29 +68,44 @@ mc3_fit_row <- function(y, x, incl, K, g_none, g_val, HC) {
   row
 }
 
-#' MC^3 sampler over the full model space (M = K)
+#' MC^3 sampler over a model space with at most M regressors
 #'
 #' Metropolis-Hastings random walk over models, in the manner of
 #' Madigan and York (1995). From the current model a neighbour is proposed by
-#' flipping one of the K inclusion indicators, chosen uniformly at random.
+#' flipping one inclusion indicator, chosen uniformly at random among the
+#' moves the constraint allows.
 #'
-#' The proposal is symmetric here BECAUSE M = K: every model has exactly K
-#' single-flip neighbours, so q(g' | g) = q(g | g') = 1/K and the Hastings
-#' ratio is 1. This is precisely the property that fails once M < K, where
-#' models of size M have only M neighbours (drops only) while smaller models
-#' have K, and the acceptance ratio then requires the correction
-#' |nbd(g)| / |nbd(g')|. Constrained MC^3 must not reuse this function without
-#' adding that term.
+#' Under the restriction |g| <= M the neighbourhood of a model of size r is
 #'
-#' The chain targets the posterior under a UNIFORM prior over models, i.e.
-#' proportional to the marginal likelihood alone. Model priors are applied
-#' afterwards in bma(), which renormalises over the visited models. Note that
-#' the binomial model prior with EMS = K/2 is exactly uniform over models, so
+#' ```
+#'   r <  M : (K - r) additions + r deletions = K neighbours
+#'   r == M : no additions,       M deletions = M neighbours
+#' ```
+#'
+#' so its size is not constant and the proposal is NOT symmetric. Writing
+#' q(g' | g) = 1 / |nbd(g)|, the Metropolis-Hastings ratio carries the factor
+#' |nbd(g)| / |nbd(g')| and the acceptance probability is
+#'
+#'   min{ 1, [p(y|g') p(g')] / [p(y|g) p(g)] * |nbd(g)| / |nbd(g')| }.
+#'
+#' Dropping that factor does not produce an error, it silently changes the
+#' target: the uncorrected chain converges to a distribution proportional to
+#' p(g | y) * |nbd(g)| rather than to p(g | y). Because boundary models (those
+#' of size exactly M) have the SMALLER neighbourhood, they end up
+#' under-weighted by a factor of M / K, biasing inference towards smaller
+#' models. When M = K every model has exactly K neighbours, the factor is 1,
+#' and this reduces to the textbook symmetric random walk.
+#'
+#' The chain targets the posterior under a UNIFORM prior over the admissible
+#' models, i.e. proportional to the marginal likelihood alone. Model priors are
+#' applied afterwards in bma(), which renormalises over the visited models.
+#' The binomial model prior with EMS = K/2 is exactly uniform over models, so
 #' for the default EMS the reweighting is exact.
 #'
 #' @param y response, as a one-column matrix
 #' @param x matrix of all K candidate regressors
 #' @param K total number of regressors
+#' @param M maximum number of regressors allowed in a model
 #' @param draws number of retained post-burn-in draws
 #' @param burn number of burn-in draws, discarded
 #' @param g_none TRUE when g = "None"
@@ -99,9 +114,14 @@ mc3_fit_row <- function(y, x, incl, K, g_none, g_val, HC) {
 #' @return list with the visited-model matrix and chain diagnostics
 #' @keywords internal
 #' @noRd
-mc3_sample <- function(y, x, K, draws, burn, g_none, g_val, HC) {
+mc3_sample <- function(y, x, K, M, draws, burn, g_none, g_val, HC) {
 
-  total <- burn + draws
+  if (M < 1L) stop("MC3 requires M >= 1.")
+
+  # Number of single-flip neighbours of a model of size r under |g| <= M.
+  nbd_size <- function(r) if (r < M) K else M
+
+  total  <- burn + draws
   cache  <- new.env(hash = TRUE, parent = emptyenv())  # key -> fitted row
   visits <- new.env(hash = TRUE, parent = emptyenv())  # key -> post-burn-in count
 
@@ -114,6 +134,7 @@ mc3_sample <- function(y, x, K, draws, burn, g_none, g_val, HC) {
 
   curr      <- integer(K)                       # start from the null model
   curr_key  <- mc3_key(curr)
+  curr_r    <- 0L
   curr_ll   <- fitted_row(curr_key, curr)[3 * K + 3]
   if (!is.finite(curr_ll))
     stop("MC3 could not start: the null model has a non-finite marginal likelihood.")
@@ -123,23 +144,36 @@ mc3_sample <- function(y, x, K, draws, burn, g_none, g_val, HC) {
 
   for (it in seq_len(total)) {
 
-    j       <- sample.int(K, 1L)
-    prop    <- curr
-    prop[j] <- 1L - prop[j]
+    prop <- curr
+    if (curr_r < M) {
+      # Every single flip is admissible.
+      j <- sample.int(K, 1L)
+      prop[j] <- 1L - prop[j]
+    } else {
+      # At the boundary only deletions keep the model admissible.
+      inc <- which(curr == 1L)
+      prop[inc[sample.int(length(inc), 1L)]] <- 0L
+    }
+    prop_r   <- sum(prop)
     prop_key <- mc3_key(prop)
     prop_ll  <- fitted_row(prop_key, prop)[3 * K + 3]
 
-    # Symmetric proposal and uniform model prior, so the acceptance ratio is
-    # just the marginal likelihood ratio. Non-finite proposals are rejected
-    # (e.g. a singular design).
-    if (is.finite(prop_ll) && log(stats::runif(1)) < (prop_ll - curr_ll)) {
+    # log of |nbd(g)| / |nbd(g')|; identically zero when M = K
+    log_hastings <- log(nbd_size(curr_r)) - log(nbd_size(prop_r))
+
+    # Uniform model prior, so the prior ratio is 1 and only the marginal
+    # likelihood ratio and the proposal correction remain. Non-finite
+    # proposals are rejected (e.g. a singular design).
+    if (is.finite(prop_ll) &&
+        log(stats::runif(1)) < (prop_ll - curr_ll + log_hastings)) {
       curr     <- prop
       curr_key <- prop_key
+      curr_r   <- prop_r
       curr_ll  <- prop_ll
       n_accept <- n_accept + 1L
     }
 
-    size_path[it] <- sum(curr)
+    size_path[it] <- curr_r
 
     if (it > burn) {
       cnt <- if (exists(curr_key, envir = visits, inherits = FALSE))
