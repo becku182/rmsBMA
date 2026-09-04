@@ -9,6 +9,10 @@ make_data <- function(seed = 11, m = 50, K = 6) {
   d
 }
 
+# Short chains are used throughout for speed: these tests check structure, not
+# convergence, so the convergence warning they legitimately trigger is noise.
+quiet_mc3 <- function(expr) suppressWarnings(suppressMessages(expr))
+
 model_keys <- function(M, K) apply(M[, 1:K, drop = FALSE], 1,
                                    function(r) paste0(as.integer(r), collapse = ""))
 
@@ -26,8 +30,9 @@ test_that("MC3 accepts any admissible M", {
   # M = K is fine, and so is omitting M
   expect_silent(suppressWarnings(suppressMessages(
     model_space(d, M = 6, mc3 = TRUE, draws = 200, burn = 100))))
-  expect_message(suppressWarnings(
-    model_space(d, mc3 = TRUE, draws = 200, burn = 100)), "full model space")
+  msgs <- capture_messages(suppressWarnings(
+    model_space(d, mc3 = TRUE, draws = 200, burn = 100)))
+  expect_match(paste(msgs, collapse = ""), "full model space")
   # M = 0 leaves only the null model and needs no sampling
   expect_error(model_space(d, M = 0, mc3 = TRUE, draws = 100, burn = 50),
                "requires M")
@@ -35,7 +40,7 @@ test_that("MC3 accepts any admissible M", {
 
 test_that("MC3 returns the documented structure", {
   d <- make_data()
-  ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 500, burn = 200))
+  ms <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 500, burn = 200))
   expect_length(ms, 6)
   expect_s3_class(ms, "model_space")
   expect_identical(ms[[6]]$method, "mc3")
@@ -50,7 +55,7 @@ test_that("MC3 returns the documented structure", {
 test_that("MC3 and enumeration fit identical rows for the same model", {
   d <- make_data(); K <- 6
   ms_e <- model_space(d, M = K, g = "UIP")
-  ms_m <- suppressMessages(model_space(d, mc3 = TRUE, draws = 3000, burn = 1000,
+  ms_m <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 3000, burn = 1000,
                                        g = "UIP"))
   ke <- model_keys(ms_e[[2]], K); km <- model_keys(ms_m[[2]], K)
   common <- intersect(ke, km)
@@ -66,7 +71,7 @@ test_that("MC3 visit frequencies converge to the exact posterior", {
   d <- make_data(); K <- 6
   b_e <- bma(model_space(d, M = K, g = "UIP"), EMS = K/2, round = 12)
   set.seed(99)
-  ms_m <- suppressMessages(model_space(d, mc3 = TRUE, draws = 100000,
+  ms_m <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 100000,
                                        burn = 10000, g = "UIP"))
   b_m <- suppressMessages(bma(ms_m, EMS = K/2, round = 12))
 
@@ -89,8 +94,9 @@ test_that("MC3 visit frequencies converge to the exact posterior", {
 
 test_that("EBA is withheld for an MC3 model space", {
   d <- make_data()
-  ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
-  expect_message(bma(ms, round = 12), "not available for an MC3 model space")
+  ms <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
+  expect_match(paste(capture_messages(bma(ms, round = 12)), collapse = ""),
+               "not available for an MC3 model space")
   b <- suppressMessages(bma(ms, round = 12))
   expect_null(b[[3]])
   # everything else still present
@@ -101,7 +107,7 @@ test_that("EBA is withheld for an MC3 model space", {
 
 test_that("dilution under MC3 warns that it is reweighting", {
   d <- make_data()
-  ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
+  ms <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
   expect_warning(suppressMessages(bma(ms, dilution = 1, dil.Par = 0.5, round = 12)),
                  "reweighting the visited")
 })
@@ -118,27 +124,36 @@ test_that("enumerated model spaces are unaffected by the MC3 additions", {
 
 test_that("chain diagnostics are reported, not just stored", {
   d <- make_data()
-  expect_message(model_space(d, mc3 = TRUE, draws = 1000, burn = 500),
-                 "cor\\(analytic PMP, visit frequency\\)")
-  expect_message(model_space(d, mc3 = TRUE, draws = 1000, burn = 500),
-                 "acceptance")
+  msgs <- paste(capture_messages(suppressWarnings(
+    model_space(d, mc3 = TRUE, draws = 1000, burn = 500))), collapse = "")
+  expect_match(msgs, "cor\\(analytic PMP, visit frequency\\)")
+  expect_match(msgs, "acceptance")
 })
 
-test_that("a short chain warns about non-convergence", {
-  d <- make_data(seed = 3, m = 40, K = 8)
-  # Too few draws to settle: the analytic and frequency estimates disagree.
-  w <- tryCatch({
-    suppressMessages(model_space(d, mc3 = TRUE, draws = 60, burn = 10))
-    NA_character_
-  }, warning = function(w) conditionMessage(w))
-  # Either it warns, or it converged anyway; both are acceptable, but if it
-  # warns the message must name the diagnostic.
-  if (!is.na(w)) expect_match(w, "may not have converged")
+test_that("a short chain warns about non-convergence, a long one does not", {
+  skip_on_cran()
+  # Diffuse signal over ten regressors: too few draws to settle, so the
+  # analytic and frequency estimates disagree and the diagnostic says so.
+  set.seed(1)
+  m <- 45; K <- 10
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m, sd = 2)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+
+  set.seed(101)
+  expect_warning(suppressMessages(model_space(d, mc3 = TRUE, draws = 300, burn = 30)),
+                 "may not have converged")
+
+  # The same chain run long enough must stop warning, otherwise the threshold
+  # is firing on everything and tells the user nothing.
+  set.seed(101)
+  expect_no_warning(suppressMessages(
+    model_space(d, mc3 = TRUE, draws = 100000, burn = 10000)))
 })
 
 test_that("slot 3 is not labelled an EBA table when it is NULL", {
   d <- make_data()
-  ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
+  ms <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
   b  <- suppressMessages(bma(ms, round = 12))
   expect_null(b[[3]])
   expect_match(names(b)[3], "not available")
@@ -209,7 +224,10 @@ test_that("S3 methods are available on both objects", {
   # print methods return their argument invisibly
   expect_output(print(ms), "model space")
   expect_output(print(b),  "Bayesian model averaging")
-  expect_identical(withVisible(print(ms))$visible, FALSE)
+  # capture.output() keeps print()'s own output out of the test log while the
+  # visibility of its return value is checked.
+  invisible(capture.output(vis <- withVisible(print(ms))$visible))
+  expect_false(vis)
 
   sm <- summary(ms)
   expect_s3_class(sm, "summary.model_space")
