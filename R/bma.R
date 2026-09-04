@@ -58,8 +58,11 @@ bma <- function(modelSpace,
 
   # Element 6 is present only for MC^3 model spaces. Under MC^3, MS above is
   # the number of DISTINCT MODELS VISITED, not the size of the model space.
-  mc3_info <- if (length(modelSpace) >= 6L) modelSpace[[6]] else NULL
-  is_mc3   <- !is.null(mc3_info) && identical(mc3_info$method, "mc3")
+  # Element 6 records how the space was built. Detect MC^3 from that field
+  # rather than from the length of the list, which is now always 6.
+  ms_info  <- if (length(modelSpace) >= 6L) modelSpace[[6]] else NULL
+  is_mc3   <- !is.null(ms_info) && identical(ms_info$method, "mc3")
+  mc3_info <- if (is_mc3) ms_info else NULL
 
   # Dividing ols results into relevant parts
   Reg_ID <- ols_results[,1:K] # we extract vector indices
@@ -375,5 +378,6 @@ bma <- function(modelSpace,
   if (is_mc3) {
     names(bma_list)[3] <- "Extreme Bounds Analysis (not available for an MC3 model space)"
   }
-  return(bma_list)
+  attr(bma_list, "space_info") <- ms_info
+  return(structure(bma_list, class = "bma"))
 }

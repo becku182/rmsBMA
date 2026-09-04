@@ -19,7 +19,8 @@ test_that("model_space returns correctly sized model space and components (OLS, 
   out <- model_space(dat, M = M, g = "None", HC = FALSE)
 
   expect_type(out, "list")
-  expect_length(out, 5)
+  expect_length(out, 6)   # 6 since the info element records how the space was built
+  expect_identical(out$info$method, "enumeration")
 
   x_names <- out[[1]]
   ols_results <- out[[2]]
@@ -183,7 +184,8 @@ test_that("model_space: when M > K it warns and sets M = K", {
   )
 
   expect_type(out, "list")
-  expect_length(out, 5)
+  expect_length(out, 6)   # 6 since the info element records how the space was built
+  expect_identical(out$info$method, "enumeration")
 
   M_out <- out[[4]]
   K_out <- out[[5]]

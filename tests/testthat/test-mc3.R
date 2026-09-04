@@ -37,6 +37,7 @@ test_that("MC3 returns the documented structure", {
   d <- make_data()
   ms <- suppressMessages(model_space(d, mc3 = TRUE, draws = 500, burn = 200))
   expect_length(ms, 6)
+  expect_s3_class(ms, "model_space")
   expect_identical(ms[[6]]$method, "mc3")
   expect_equal(ms[[4]], 6)                 # M = K
   expect_equal(ms[[5]], 6)                 # K
@@ -108,7 +109,8 @@ test_that("dilution under MC3 warns that it is reweighting", {
 test_that("enumerated model spaces are unaffected by the MC3 additions", {
   d <- make_data()
   ms <- model_space(d, M = 3, g = "UIP")
-  expect_length(ms, 5)                      # no 6th element
+  expect_length(ms, 6)                      # info element, method "enumeration"
+  expect_identical(ms$info$method, "enumeration")
   b <- bma(ms, round = 12)
   expect_false(is.null(b[[3]]))             # EBA still produced
   expect_null(b[[16]])                      # no chain diagnostics
@@ -194,4 +196,49 @@ test_that("a barely-moving chain is flagged", {
   expect_warning(suppressMessages(
     model_space(d, M = 3, mc3 = TRUE, draws = 5000, burn = 1000, g = "UIP")),
     "barely moved")
+})
+
+test_that("S3 methods are available on both objects", {
+  d <- make_data()
+  ms <- model_space(d, M = 3, g = "UIP")
+  b  <- bma(ms, EMS = 3, round = 6)
+
+  expect_s3_class(ms, "model_space")
+  expect_s3_class(b, "bma")
+
+  # print methods return their argument invisibly
+  expect_output(print(ms), "model space")
+  expect_output(print(b),  "Bayesian model averaging")
+  expect_identical(withVisible(print(ms))$visible, FALSE)
+
+  sm <- summary(ms)
+  expect_s3_class(sm, "summary.model_space")
+  expect_equal(sum(sm$sizes$models), ms$MS)   # every model counted once
+  expect_output(print(sm), "models by size")
+
+  sb <- summary(b)
+  expect_s3_class(sb, "summary.bma")
+  expect_output(print(sb), "posterior inclusion probability")
+  # ordered by PIP, intercept aside
+  pip <- sb$table[-nrow(sb$table), "PIP"]
+  expect_false(is.unsorted(rev(pip[!is.na(pip)])))
+
+  cf <- coef(b)
+  expect_type(cf, "double")
+  expect_length(cf, ms$K + 1)
+  expect_identical(names(cf)[1], "CONST")
+  expect_equal(unname(cf), unname(b[[1]][, "PM"]))
+  expect_equal(unname(coef(b, conditional = TRUE)), unname(b[[1]][, "PMcon"]))
+  expect_false(identical(coef(b, "uniform"), coef(b, "random")))
+  expect_error(coef(b, prior = "nonsense"))
+})
+
+test_that("positional access into both objects still works", {
+  d <- make_data()
+  ms <- model_space(d, M = 3, g = "UIP")
+  expect_true(is.matrix(ms[[2]]))
+  expect_equal(ms[[5]], 6)
+  b <- bma(ms, EMS = 3, round = 6)
+  expect_true(is.matrix(b[[1]]))
+  expect_equal(b[[6]], 6)
 })

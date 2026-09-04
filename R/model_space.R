@@ -103,6 +103,7 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
          "Set mc3 = TRUE to sample the model space.")
   }
 
+  g_label <- if (is.character(g)) g else "user-specified"
   g_none <- identical(g, "None")
   if (!g_none) {
     if (is.null(g) || identical(g, "UIP")) {
@@ -148,6 +149,9 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
     colnames(ols_results) <- model_space_colnames(x_names, K)
 
     mc3_info <- list(method     = "mc3",
+                     g          = if (g_none) "None" else g,
+                     g_label    = g_label,
+                     HC         = HC,
                      draws      = draws,
                      burn       = burn,
                      acceptance = fit$acceptance,
@@ -196,8 +200,9 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
 
     # Element 3 is now the number of DISTINCT MODELS VISITED, not the size of
     # the model space. The full space size is kept in mc3_info$space_size.
-    out <- list(x_names, ols_results, fit$n_models, M, K, mc3_info)
-    return(out)
+    out <- list(x_names = x_names, ols_results = ols_results,
+                MS = fit$n_models, M = M, K = K, info = mc3_info)
+    return(structure(out, class = "model_space"))
   }
   ## ---- end MC^3 path ------------------------------------------------------
 
@@ -326,7 +331,16 @@ model_space=function(data, M = NULL, g = "UIP", HC = FALSE,
   # Shared with the MC^3 path so the two cannot drift apart.
   colnames(ols_results) <- model_space_colnames(x_names, K)
 
-  out<-list(x_names,ols_results,MS,M,K) # we create a model_space object
+  # Element 6 is always present and records how the space was built, so that
+  # summary(), print() and bma() can describe it without guessing. It is the
+  # method field, not the length of the list, that tells MC^3 from enumeration.
+  info <- list(method = "enumeration",
+               g      = if (g_none) "None" else g,
+               g_label = g_label,
+               HC     = HC)
 
-  return(out)
+  out <- list(x_names = x_names, ols_results = ols_results,
+              MS = MS, M = M, K = K, info = info)
+
+  return(structure(out, class = "model_space"))
 }
