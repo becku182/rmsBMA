@@ -202,7 +202,7 @@ section("Prior and posterior model probabilities")
 for_models <- model_pmp(bma_results)
 
 
-for_models <- model_pmp(bma_results, top = 10)
+for_models <- model_pmp(bma_results, top = 10, type = "histogram")
 
 
 size_graphs <- model_sizes(bma_results)

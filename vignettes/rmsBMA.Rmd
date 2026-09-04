@@ -732,11 +732,11 @@ for_models <- model_pmp(bma_results)
 
 
 The graphs demonstrate that great share of the posterior probability mass is concentrated within just a couple of models.
-To view the results for only the best models, the user can use the `top` parameter.
+To view the results for only the best models, the user can use the `top` parameter. Both `model_pmp` and `model_sizes` also take a `type` argument: `"line"`, the default, draws the prior and posterior as lines, while `"histogram"` draws them as side-by-side bars. The bars make individual models easier to tell apart once `top` is small, and the lines stay readable when it is not; the numbers behind the two are the same.
 
 ```{r}
 
-for_models <- model_pmp(bma_results, top = 10)
+for_models <- model_pmp(bma_results, top = 10, type = "histogram")
 ```
 
 
@@ -758,7 +758,7 @@ size_graphs <- model_sizes(bma_results)
 
 The graph illustrates that the posterior distribution over model sizes is largely independent of the prior specification, as it appears very similar under both the binomial and the binomial--beta model priors.
 
-Model size is a discrete quantity, and `type = "histogram"` draws the same probabilities as side-by-side bars rather than lines. The bar form makes the mass at each individual size easier to read, and the line form is easier to follow when the model space is large; the underlying numbers are identical.
+The same `type` argument applies here. Model size is discrete, so `"histogram"` puts a bar at each integer size, which makes the mass at any one of them easier to read; the line form is easier to follow when the model space is large.
 
 ```{r}
 size_bars <- model_sizes(bma_results, type = "histogram")
