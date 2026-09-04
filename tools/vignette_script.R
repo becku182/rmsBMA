@@ -180,7 +180,7 @@ bma_results <- bma(modelSpace, round = 3)
 
 summary(bma_results)
 
-round(coef(bma_results), 3)
+coef(bma_results)
 
 
 bma_results[[1]]
@@ -206,6 +206,8 @@ for_models <- model_pmp(bma_results, top = 10)
 
 
 size_graphs <- model_sizes(bma_results)
+
+size_bars <- model_sizes(bma_results, type = "histogram")
 
 
 ## -- Selecting the best models -------------------------------------------

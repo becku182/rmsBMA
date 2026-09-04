@@ -73,3 +73,52 @@ test_that("model_sizes returns three ggplot objects (dilution = 1)", {
     expect_equal(plots[[2]]$labels$y, "Prior, Posterior")
   })
 })
+
+test_that("model_sizes type argument switches the geometry", {
+  skip_if_not_installed("ggpubr")
+  set.seed(4)
+  m <- 40; K <- 5
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  b <- bma(model_space(d, M = K, g = "UIP"), EMS = 2, round = 6)
+
+  geom_of <- function(p) class(p$layers[[1]]$geom)[1]
+
+  line <- suppressWarnings(model_sizes(b))                       # default
+  hist <- suppressWarnings(model_sizes(b, type = "histogram"))
+
+  expect_identical(geom_of(line[[1]]), "GeomLine")
+  expect_identical(geom_of(hist[[1]]), "GeomCol")
+  expect_identical(geom_of(line[[2]]), "GeomLine")
+  expect_identical(geom_of(hist[[2]]), "GeomCol")
+
+  # same numbers behind both, only the geometry differs
+  expect_equal(line[[1]]$data, hist[[1]]$data)
+  expect_equal(line[[2]]$data, hist[[2]]$data)
+
+  # axis labels are shared so the two forms stay comparable
+  expect_identical(line[[1]]$labels$x, hist[[1]]$labels$x)
+  expect_identical(line[[1]]$labels$y, hist[[1]]$labels$y)
+
+  expect_identical(geom_of(suppressWarnings(model_sizes(b, type = "line"))[[1]]),
+                   "GeomLine")
+  expect_error(model_sizes(b, type = "pie"))
+})
+
+test_that("model_sizes titles the combined panels, diluted or not", {
+  skip_if_not_installed("ggpubr")
+  set.seed(5)
+  m <- 40; K <- 4
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  ms <- model_space(d, M = K, g = "UIP")
+
+  plain <- suppressWarnings(model_sizes(bma(ms, EMS = 2, round = 6),
+                                        type = "histogram"))
+  dil   <- suppressWarnings(model_sizes(
+    bma(ms, EMS = 2, dilution = 1, dil.Par = 0.5, round = 6), type = "histogram"))
+  expect_length(plain, 3)
+  expect_length(dil, 3)
+})
