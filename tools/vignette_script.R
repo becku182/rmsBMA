@@ -124,6 +124,10 @@ if (RUN_SLOW) {
                     as.character(colnames(rmsBMA::modelSpace[[2]]))))
 }
 
+modelSpace
+
+summary(modelSpace)
+
 
 ## -- Sampling the model space: MC^3 --------------------------------------
 section("Sampling the model space: MC^3")
@@ -140,7 +144,7 @@ is.null(mc3_results[[3]])
 ## ---- Chain diagnostics ---------------------------------------------------
 section("Chain diagnostics")
 
-str(mc3Space[[6]][c("draws", "burn", "acceptance", "cor_pmp", "mean_size", "space_size")])
+mc3Space
 
 
 ## ---- Reduced model spaces ------------------------------------------------
@@ -173,6 +177,10 @@ section("Bayesian model averaging: The bma function")
 
 
 bma_results <- bma(modelSpace, round = 3)
+
+summary(bma_results)
+
+round(coef(bma_results), 3)
 
 
 bma_results[[1]]
@@ -341,7 +349,7 @@ bma_results_dil2[[2]]
 group_vec <- c(1,0,1,0,0,0,2,2,3,3)
 
 
-cbind(modelSpace[[1]],group_vec)
+cbind(modelSpace$x_names, group_vec)
 
 
 par_vec <- c(0.8,0.6,0.4)

@@ -536,7 +536,17 @@ For the reminder of the manuscript we are going to utilize smaller model space a
 modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
 ```
 
-The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list consisting of five components, comprising the full model space and additional elements required for subsequent use in the `bma` function. When the model space is sampled rather than enumerated, a sixth component holding the chain diagnostics is added; this is described in the next section.
+The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list of six components: the regressor names, the model space itself, its size, `M`, `K`, and an `info` element recording how the space was built. Printing the object summarises those settings, and `summary` adds the distribution of models by size.
+
+```{r}
+modelSpace
+```
+
+```{r}
+summary(modelSpace)
+```
+
+The components remain reachable by position or by name --- `modelSpace[[2]]` and `modelSpace$ols_results` are the same matrix --- which the `bma` function and the remainder of this article rely on.
 
 ## Sampling the model space: MC$^3$
 
@@ -574,11 +584,13 @@ Dilution priors, by contrast, remain available, since model priors are applied a
 
 ### Chain diagnostics
 
-`model_space` reports the acceptance rate, the mean model size, the number of distinct models visited, and one figure that decides whether the run can be used at all.
+`model_space` reports the acceptance rate, the mean model size, the number of distinct models visited, and one figure that decides whether the run can be used at all. Printing a sampled model space shows them together:
 
 ```{r}
-str(mc3Space[[6]][c("draws", "burn", "acceptance", "cor_pmp", "mean_size", "space_size")])
+mc3Space
 ```
+
+The individual values are available in `mc3Space$info`.
 
 `cor_pmp` is the correlation between two estimates of the same quantity: the posterior mass each visited model earns from its marginal likelihood and prior, and the frequency with which the chain actually visited it. The two agree only once the chain has converged, so a value near one indicates it has settled, while a lower one means `draws` should be increased. Below $0.99$ the function warns.
 
@@ -644,7 +656,19 @@ bma_results <- bma(modelSpace, round = 3)
 ```
 
 
-The `bma` function returns a list containing 15 elements. However, most of these elements are only required for other functions. The main objects of interest are the two tables with the BMA statistics. The results obtained with binomial model prior are first on the list.
+Printing the object gives an overview of the fit, `summary` returns the coefficient table with the regressors ordered by posterior inclusion probability, and `coef` extracts the posterior means as a named vector.
+
+```{r}
+summary(bma_results)
+```
+
+```{r}
+round(coef(bma_results), 3)
+```
+
+Both take a `prior` argument, `"uniform"` for the binomial model prior (the default) or `"random"` for the binomial--beta prior, and `coef` additionally takes `conditional = TRUE` for means conditional on inclusion.
+
+The `bma` function returns a list containing 16 elements. However, most of these elements are only required for other functions. The main objects of interest are the two tables with the BMA statistics. The results obtained with binomial model prior are first on the list.
 
 ```{r}
 
@@ -1048,7 +1072,7 @@ The numerical indices can be displayed alongside the regressor names by executin
 
 ```{r}
 
-cbind(modelSpace[[1]],group_vec)
+cbind(modelSpace$x_names, group_vec)
 ```
 
 
