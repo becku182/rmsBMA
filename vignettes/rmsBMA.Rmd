@@ -550,8 +550,6 @@ $$
 
 Because the chain spends time in each model in proportion to its posterior probability, models with negligible posterior mass are simply never visited, and the cost of the exercise is governed by the number of models worth looking at rather than by the size of the space.
 
-The `M` argument works exactly as it does for enumeration, so a reduced model space can be sampled as well as a full one; the adjustment this requires is described under Restrictions below.
-
 Two arguments control the chain. `draws` is the number of retained draws, and `burn` is the number of initial draws discarded, so the chain runs for `draws + burn` iterations in total. If `burn` is not supplied it defaults to `draws`, giving a fifty per cent burn-in.
 
 ```{r}
@@ -580,9 +578,21 @@ This is the correlation between two estimates of the same quantity. The first is
 str(mc3Space[[6]][c("draws", "burn", "acceptance", "cor_pmp", "mean_size", "space_size")])
 ```
 
+### Sampling a reduced model space
+
+The `M` argument behaves exactly as it does under enumeration, so a reduced model space can be sampled as well as a full one. The restriction does, however, change the geometry of the problem in a way the sampler has to account for.
+
+Under $|\gamma| \le M$ the number of neighbours of a model depends on its size. A model containing $r < M$ regressors admits $K - r$ additions and $r$ deletions, hence $K$ neighbours; a model already holding $M$ regressors cannot add anything and therefore has only $M$. The proposal is no longer symmetric, and the acceptance probability picks up a Hastings factor:
+
+$$
+\alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)} \cdot \frac{|\mathrm{nbd}(\gamma)|}{|\mathrm{nbd}(\gamma')|}\right\}.
+$$
+
+Omitting this factor produces no error and no warning. It quietly changes the distribution the chain converges to, from $p(\gamma \mid y)$ to one proportional to $p(\gamma \mid y)\,|\mathrm{nbd}(\gamma)|$. Since the models at the boundary are the ones with the *smaller* neighbourhood, they are the ones that lose mass, and inference is pulled towards models smaller than $M$. The correction is applied automatically. When $M = K$ every model has exactly $K$ neighbours, the factor equals one, and the sampler reduces to the textbook symmetric random walk.
+
 ### Verifying the sampler against enumeration
 
-Because `Trade_data_small` contains only ten regressors, its full model space of $1{,}024$ models can be enumerated exactly, which makes it possible to check the sampler against a known answer.
+Because `Trade_data_small` contains only ten regressors, its model space is small enough to enumerate exactly, which makes it possible to check the sampler against a known answer rather than take it on trust. Consider first the full space of $1{,}024$ models.
 
 ```{r}
 exact_space <- model_space(Trade_data_small, M = 10, g = "UIP")
@@ -600,27 +610,59 @@ round(comparison, 4)
 
 The posterior inclusion probabilities agree to several decimal places, even though the chain visited only a small fraction of the $1{,}024$ available models. The models it skipped are precisely those whose posterior probability is too small to affect any of the reported quantities.
 
-### Restrictions
-
-One restriction applies to MC$^3$ in the current version of the package, and one property of the sampler deserves attention when the model space is reduced.
-
-**Reduced model spaces require a correction to the proposal.** Sampling works for any $M$, but the constraint $|\gamma| \le M$ makes the neighbourhood of a model depend on its size. A model containing $r < M$ regressors has $K - r$ available additions and $r$ available deletions, hence $K$ neighbours in total; a model already containing $M$ regressors can only delete, and so has just $M$. The proposal is therefore not symmetric, and the acceptance probability carries a Hastings factor:
-
-$$
-\alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)} \cdot \frac{|\mathrm{nbd}(\gamma)|}{|\mathrm{nbd}(\gamma')|}\right\}.
-$$
-
-Omitting this factor does not produce an error. It silently changes the distribution the chain converges to, from $p(\gamma \mid y)$ to something proportional to $p(\gamma \mid y)\,|\mathrm{nbd}(\gamma)|$. Since models at the boundary have the *smaller* neighbourhood, they are the ones that lose mass, and inference is pulled towards models smaller than $M$. On a seven-regressor example with $M = 3$ and posterior mass spread across sizes, the uncorrected chain recovers only $47$ per cent of the mass that genuinely belongs at $r = M$, matching the value the expression above predicts. The correction is applied automatically; when $M = K$ every model has exactly $K$ neighbours, the factor equals one, and the sampler reduces to the usual symmetric random walk.
+The same exercise can be repeated on a reduced model space, which is where the proposal correction matters. Restricting to at most five regressors leaves $638$ models, still small enough to enumerate.
 
 ```{r}
-set.seed(3)
-mc3Reduced <- model_space(Trade_data, M = 7, mc3 = TRUE, draws = 50000, burn = 25000,
-                          g = "UIP")
+exact_red <- model_space(Trade_data_small, M = 5, g = "UIP")
+exact_red_bma <- bma(exact_red, EMS = 5, round = 6)
+
+set.seed(4)
+sampled_red <- model_space(Trade_data_small, M = 5, mc3 = TRUE, draws = 50000,
+                           burn = 25000, g = "UIP")
+sampled_red_bma <- bma(sampled_red, EMS = 5, round = 6)
+
+round(cbind(Enumerated = exact_red_bma[[1]][, "PIP"],
+            MC3        = sampled_red_bma[[1]][, "PIP"]), 4)
 ```
 
-**A concentrated posterior can leave the chain barely moving.** At the boundary only deletions are proposed, so moving from one model of size $M$ to a different model of size $M$ requires first accepting a smaller and typically worse model. When the posterior is sharply concentrated on a single specification of size $M$, the chain can therefore accept very few proposals and visit very few models. The convergence correlation is unhelpful here, because the handful of models visited agree perfectly among themselves; `model_space` instead issues a separate warning when the acceptance rate falls below two per cent. If that warning appears, the visited set should be treated as a possibly incomplete picture of the model space, and the result checked against a longer chain or, where feasible, against enumeration.
+The effect of the correction is clearest in the distribution of posterior mass across model sizes, since it is the models at the boundary $r = M$ whose weight is at stake.
 
-**Extreme Bounds Analysis is not available for a sampled model space.** Extreme bounds are defined by the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass. Bounds computed from a visited subset are therefore systematically too narrow, which makes a regressor appear more robust than it is. Since this failure is silent and always points in the same direction, EBA is withheld entirely rather than reported with a caveat: the third element of the `bma` object is `NULL` and a message explains why.
+```{r}
+mass_by_size <- function(weights, tab, K, M) {
+  m <- tapply(weights, rowSums(tab[, seq_len(K), drop = FALSE]), sum)
+  # a sampler need not visit every size, so align on a common 0..M index
+  out <- setNames(numeric(M + 1), as.character(0:M))
+  out[names(m)] <- m
+  out
+}
+
+exact_mass <- mass_by_size(exact_red_bma[[10]][, 11], exact_red_bma[[10]], 10, 5)
+mc3_mass   <- mass_by_size(sampled_red[[6]]$visits / sum(sampled_red[[6]]$visits),
+                           sampled_red_bma[[10]], 10, 5)
+
+round(rbind(Enumerated = exact_mass, MC3 = mc3_mass), 4)
+```
+
+The sampled mass at each model size tracks the enumerated mass closely. It is worth seeing what would happen without the correction, which can be computed directly from the enumerated answer: the uncorrected chain would converge to a distribution proportional to $p(\gamma \mid y)\,|\mathrm{nbd}(\gamma)|$, so the mass at the boundary would be
+
+```{r}
+nbd <- ifelse(as.integer(names(exact_mass)) < 5, 10, 5)   # K = 10, M = 5
+boundary <- nbd == 5
+c(exact       = unname(sum(exact_mass[boundary])),
+  uncorrected = unname(sum(exact_mass[boundary] * 5) / sum(exact_mass * nbd)))
+```
+
+a shift of several percentage points away from the boundary and towards smaller models, which would be invisible in any output the package produces.
+
+### When the chain barely moves
+
+At the boundary only deletions are proposed, so moving from one model of size $M$ to a different model of the same size requires first accepting a smaller and typically worse model. When the posterior is sharply concentrated on a single specification of size $M$ --- which is precisely the situation reduced model space BMA is designed for --- the chain can accept very few proposals and visit very few models.
+
+The convergence correlation is of no help here, because the handful of models the chain did visit agree perfectly among themselves and the correlation is close to one. `model_space` therefore issues a separate warning whenever the acceptance rate falls below two per cent. If that warning appears, the visited set should be treated as a possibly incomplete picture of the model space, and the result checked against a longer chain or, where feasible, against enumeration.
+
+### Extreme Bounds Analysis is not available for a sampled model space
+
+Extreme bounds are defined by the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass. Bounds computed from a visited subset are therefore systematically too narrow, which makes a regressor appear more robust than it is. Since this failure is silent and always points in the same direction, EBA is withheld entirely rather than reported with a caveat: the third element of the `bma` object is `NULL` and a message explains why.
 
 ```{r}
 is.null(mc3_results[[3]])
