@@ -13,7 +13,8 @@ Bounds Analysis, Bayesian model selection, and jointness analysis. It
 also offers graphical functions for exploring the model space and
 coefficient distributions. Moreover, it introduces a non-empirical
 dilution prior to address multicollinearity in the presence of model
-uncertainty.
+uncertainty. When the model space is too large to enumerate, it can be
+explored by MC^3 sampling instead.
 
 ## Installation
 
@@ -384,3 +385,87 @@ Best[[4]]
 #> |PMP        |       0.107       |       0.051       |       0.037       |       0.031       |       0.031       |
 #> |R^2        |       0.927       |       0.928       |       0.927       |       0.927       |       0.923       |
 ```
+
+## Example 2: sampling a large model space
+
+Enumerating the model space means fitting $2^K$ models, which is 131,072
+for the seventeen regressors in `Trade_data` and quickly becomes
+impossible as $K$ grows. Setting `mc3 = TRUE` explores the space by MC^3
+sampling instead, which visits models in proportion to their posterior
+probability and so never spends time on the ones that carry no mass.
+
+``` r
+set.seed(1)
+mc3Space <- model_space(Trade_data, mc3 = TRUE, draws = 50000, burn = 25000, g = "UIP")
+
+mc3Space
+
+#> model space
+#>   regressors          : 17
+#>   maximum size        : 17 (full model space)
+#>   models              : 1,512 visited by MC3, of 131,072
+#>   g prior             : UIP (g = 0.003077)
+#>   covariance          : conventional
+#>   chain               : 50000 draws after 25000 burn-in
+#>   acceptance rate     : 0.213
+#>   convergence         : cor(analytic PMP, visit frequency) = 0.9942
+```
+
+The chain found the 1,512 models that matter out of 131,072, in about
+four seconds against roughly thirty for enumeration. The last line is
+the convergence check: it compares the posterior mass each visited model
+earns analytically with how often the chain actually visited it, and the
+two agree only once the chain has settled.
+
+The result is passed to `bma()` in the usual way. Note that Extreme
+Bounds Analysis is not available for a sampled model space, because a
+sampler does not visit the extremes of a distribution it is exploring by
+posterior mass; element 3 of the returned object is `NULL`.
+
+``` r
+bma_mc3 <- bma(mc3Space, EMS = 5, round = 3)
+
+summary(bma_mc3)
+
+#> Bayesian model averaging -- binomial model prior 
+#>   regressors: 17   models: 1,512 (MC3) 
+#>   prior model size: 5   posterior model size: 6.94 
+#>   chain: acceptance 0.213  cor(analytic PMP, visit frequency) 0.9942 
+#>   extreme bounds analysis is not available for an MC3 model space
+#> 
+#> regressors ordered by posterior inclusion probability
+#>              PIP     PM   PSD  PMcon PSDcon  P(+)   PSC
+#> LNDGEO     1.000 -1.211 0.084 -1.211  0.084 0.000 1.000
+#> LNRGDPPROD 1.000  0.892 0.020  0.892  0.020 1.000 1.000
+#> GOV        0.989 -4.019 1.078 -4.064  0.996 0.000 0.994
+#> INFVAR     0.919 -0.039 0.016 -0.042  0.012 0.000 0.959
+#> LANDpc     0.774  0.000 0.000  0.000  0.000 0.773 0.886
+#> B          0.647  0.272 0.231  0.421  0.141 0.646 0.822
+#> FDI        0.493  0.012 0.014  0.025  0.011 0.491 0.744
+#> ...
+```
+
+Reduced model spaces can be sampled as well: `M` behaves as it does
+under enumeration, and the sampler applies the correction that the size
+constraint requires.
+
+## Working with the results
+
+`model_space` and `bma` objects have `print`, `summary` and `coef`
+methods. `coef()` returns the posterior means as a named vector, and
+takes `prior = "random"` for the binomial-beta model prior or
+`conditional = TRUE` for means conditional on inclusion.
+
+``` r
+round(coef(bma_mc3), 3)
+
+#>      CONST          B     LNDGEO          L LNRGDPPROD RGDPpcDIFF        GOV 
+#>      8.216      0.272     -1.211      0.060      0.892     -0.003     -4.019 
+#>      HUMAN        CPW     INFVAR     ARABLE   ARABLEpw       LAND     LANDpc 
+#>     -0.001      0.000     -0.039      0.000     -0.003      0.000      0.000 
+#>      EPCpc        FDI        KSI    BCIDIFF 
+#>      0.000      0.012     -0.231      0.000
+```
+
+`model_sizes()` and `model_pmp()` take `type = "histogram"` to draw the
+prior and posterior as side-by-side bars rather than lines.

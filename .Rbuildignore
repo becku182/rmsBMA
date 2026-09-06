@@ -21,3 +21,4 @@
 ^_stage.*\.tar\.gz$
 ^_s.*\.tar\.gz$
 ^tests/testthat/Rplots\.pdf$
+^README\.html$
