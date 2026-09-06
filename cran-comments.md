@@ -8,7 +8,6 @@ the CRAN check machines for version 0.1.2.
 * local: macOS 15.7.4, R 4.4.1, aarch64-apple-darwin20
 * win-builder: R-devel (2026-09-04 r90492 ucrt), 1 NOTE
 * win-builder: R 4.6.1 (2026-06-24 ucrt), 1 NOTE
-* macOS builder: R release                [PENDING -- paste result]
 
 ## R CMD check results
 
