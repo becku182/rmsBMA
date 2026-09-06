@@ -7,3 +7,4 @@
 .positai
 Claude outputs/
 _stage*.tar.gz
+_s*.tar.gz
