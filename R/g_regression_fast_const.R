@@ -62,6 +62,13 @@ g_regression_fast_const <- function(y, g = 0.5) {
   y_m <- mean(y)
   y_center_ss <- yty - m * (y_m^2)
 
+  # As in fast_ols_const: a constant y makes both of these zero in exact
+  # arithmetic. y_center_ss is a difference of two nearly equal numbers, so it
+  # can also come out slightly NEGATIVE through cancellation, which would send
+  # log(EX_1) to NaN. Snapping both removes that whole class of outcome.
+  yPzy        <- snap_zero(yPzy, yty, m)
+  y_center_ss <- snap_zero(y_center_ss, yty, m)
+
   EX_1 <- (1/(g+1)) * yPzy + (g/(g+1)) * y_center_ss
 
   co_var <- V * ((EX_1) / (m - 2))

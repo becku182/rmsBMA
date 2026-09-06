@@ -80,3 +80,26 @@ test_that("fast_ols_const handles constant y (SST = 0) by returning NaN/Inf R2",
   # SSR=0 implies log(SSR) is -Inf, so log_like should be Inf (because -m/2 * -Inf)
   expect_true(is.infinite(out[[3]]))
 })
+
+test_that("fast_ols_const is deterministic for a constant y on any BLAS", {
+  # CRAN's BLIS machine failed the old form of this test: with a constant y the
+  # fit is exact, so the residual sum of squares is zero in exact arithmetic,
+  # but a BLAS returning an intercept off by 1e-15 gives a residual around
+  # 1e-29 instead, and the log likelihood comes out as a large finite number
+  # rather than Inf. The estimator now snaps rounding-level sums of squares to
+  # zero, so the answer is the same everywhere.
+  for (val in c(5, 0, -3, 1e6)) {
+    y <- rep(val, 12)
+    out <- fast_ols_const(y)
+    expect_true(is.infinite(out[[3]]), info = paste("y =", val))
+    expect_true(is.nan(out[[4]]), info = paste("y =", val))
+  }
+
+  # ordinary data must be untouched: the tolerance scales with the data, so a
+  # genuine residual sum of squares can never reach it
+  set.seed(12)
+  y <- stats::rnorm(40, mean = 3)
+  out <- fast_ols_const(y)
+  expect_true(is.finite(out[[3]]))
+  expect_true(is.finite(out[[4]]))
+})

@@ -449,6 +449,8 @@ $$
 
 Consequently, this test is extremely stringent, as even a single poorly specified model may lead to its failure---a situation analogous to a false negative result. Nevertheless, if a regressor passes this test, its robustness is difficult to question.
 
+Because the bounds are defined by the extreme estimates across *all* models considered, EBA requires the complete model space. It is therefore available only when the model space has been enumerated, and not when it has been explored by sampling; this is discussed further in the section on MC$^3$.
+
 # Data preparation
 
 This section demonstrates how to prepare the data for estimation. The first step involves installing the package and subsequently loading it into the R session.
@@ -534,7 +536,113 @@ For the reminder of the manuscript we are going to utilize smaller model space a
 modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
 ```
 
-The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list consisting of five components, comprising the full model space and additional elements required for subsequent use in the `bma` function.
+The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list of six components: the regressor names, the model space itself, its size, `M`, `K`, and an `info` element recording how the space was built. Printing the object summarises those settings, and `summary` adds the distribution of models by size.
+
+```{r}
+modelSpace
+```
+
+```{r}
+summary(modelSpace)
+```
+
+The components remain reachable by position or by name --- `modelSpace[[2]]` and `modelSpace$ols_results` are the same matrix --- which the `bma` function and the remainder of this article rely on.
+
+## Sampling the model space: MC$^3$
+
+With $K$ regressors and $M = K$ there are $2^K$ models --- $131{,}072$ for the seventeen in `Trade_data` --- and restricting to $M < K$ helps less than it might seem: $K = 100$ with $M = 7$ still leaves some $1.6 \times 10^{10}$. Beyond roughly twenty regressors, enumeration stops being an option.
+
+Setting `mc3 = TRUE` replaces it with Markov Chain Monte Carlo Model Composition [MC$^3$, @Madigan+1995; @Raftery+1997], a Metropolis--Hastings random walk over the model space. A neighbour $\gamma'$ of the current model $\gamma$ is proposed by adding or dropping a single regressor and accepted with probability
+
+$$
+\alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)} \cdot \frac{|\mathrm{nbd}(\gamma)|}{|\mathrm{nbd}(\gamma')|}\right\},
+$$
+
+where $|\mathrm{nbd}(\cdot)|$ counts a model's neighbours. The chain visits each model in proportion to its posterior probability, so models carrying negligible mass are never visited at all and the cost depends on how many models matter rather than on how many exist.
+
+`draws` is the number of retained draws and `burn` the number discarded, so the chain runs for `draws + burn` iterations; `burn` defaults to `draws`. The `M` argument behaves as it does under enumeration.
+
+```{r}
+set.seed(1)
+mc3Space <- model_space(Trade_data, mc3 = TRUE, draws = 50000, burn = 25000, g = "UIP")
+```
+
+Enumerating that space takes about thirty seconds; the chain takes four. The result is then passed to `bma` in the usual way.
+
+```{r}
+mc3_results <- bma(mc3Space, EMS = 5, round = 4)
+mc3_results[[1]]
+```
+
+One element of that object is missing. Extreme bounds are the smallest and largest coefficient estimates across *all* models, and a sampler never visits the extremes of a distribution it is exploring by posterior mass, so bounds computed from a visited subset are systematically too narrow --- which makes a regressor appear more robust than it is. Because that failure is silent and always points the same way, Extreme Bounds Analysis is withheld rather than reported with a caveat.
+
+```{r}
+is.null(mc3_results[[3]])
+```
+
+Dilution priors, by contrast, remain available, since model priors are applied after the chain has run by reweighting the visited models. A warning notes that the chain explored under a uniform model prior, so the reweighting is dependable when dilution is mild and less so otherwise.
+
+### Chain diagnostics
+
+`model_space` reports the acceptance rate, the mean model size, the number of distinct models visited, and one figure that decides whether the run can be used at all. Printing a sampled model space shows them together:
+
+```{r}
+mc3Space
+```
+
+The individual values are available in `mc3Space$info`.
+
+`cor_pmp` is the correlation between two estimates of the same quantity: the posterior mass each visited model earns from its marginal likelihood and prior, and the frequency with which the chain actually visited it. The two agree only once the chain has converged, so a value near one indicates it has settled, while a lower one means `draws` should be increased. Below $0.99$ the function warns.
+
+A second warning fires when the acceptance rate falls below two per cent. `cor_pmp` cannot detect a chain that has barely moved, because the handful of models it did visit agree perfectly among themselves; if that warning appears, the visited set should be treated as an incomplete picture of the model space.
+
+### Reduced model spaces
+
+Under $|\gamma| \le M$ the neighbourhood is not of constant size. A model of size $r$ admits $K - r$ additions and $r$ deletions while $r < M$, but one already holding $M$ regressors can only delete:
+
+$$
+|\mathrm{nbd}(\gamma)| =
+\begin{cases}
+  K, & r < M, \\
+  M, & r = M.
+\end{cases}
+$$
+
+The proposal is therefore asymmetric, and the Hastings factor in the acceptance probability above is what corrects it. Omitting that factor raises no error. It changes the distribution the chain converges to, from $p(\gamma \mid y)$ to
+
+$$
+\tilde{p}(\gamma \mid y) \;\propto\; p(\gamma \mid y)\,\bigl|\mathrm{nbd}(\gamma)\bigr|,
+$$
+
+and since boundary models carry the smaller neighbourhood, they are the ones that lose mass: inference drifts towards models smaller than $M$. The correction is applied automatically, and equals one when $M = K$.
+
+### Checking the sampler against enumeration
+
+`Trade_data_small` has ten regressors, so restricting the model space to five leaves only $638$ models and can be enumerated exactly. That makes it possible to check the sampler against a known answer rather than take it on trust.
+
+```{r}
+exact_red   <- model_space(Trade_data_small, M = 5, g = "UIP")
+exact_bma   <- bma(exact_red, EMS = 5, round = 6)
+
+set.seed(4)
+sampled_red <- model_space(Trade_data_small, M = 5, mc3 = TRUE,
+                           draws = 50000, burn = 25000, g = "UIP")
+sampled_bma <- bma(sampled_red, EMS = 5, round = 6)
+
+round(cbind(Enumerated = exact_bma[[1]][, "PIP"],
+            MC3        = sampled_bma[[1]][, "PIP"]), 4)
+```
+
+```{r include=FALSE}
+boundary_mass <- function(w, tab) sum(w[rowSums(tab[, 1:10, drop = FALSE]) == 5])
+bm_exact <- boundary_mass(exact_bma[[10]][, 11], exact_bma[[10]])
+bm_mc3   <- boundary_mass(sampled_red[[6]]$visits / sum(sampled_red[[6]]$visits),
+                          sampled_bma[[10]])
+nbd_size <- ifelse(rowSums(exact_bma[[10]][, 1:10]) < 5, 10, 5)
+bm_uncor <- bm_exact * 5 / sum(exact_bma[[10]][, 11] * nbd_size)
+```
+
+The inclusion probabilities agree to four decimal places while the chain visits `r sampled_red[[3]]` of the $638$ models. The correction shows up in the posterior mass at the boundary $r = M$, which enumeration puts at `r round(bm_exact, 3)` and the sampler at `r round(bm_mc3, 3)`. Without it the chain would converge to `r round(bm_uncor, 3)` instead --- an error that would be invisible in any output the package produces.
 
 # Performing Bayesian model averaging
 
@@ -548,7 +656,19 @@ bma_results <- bma(modelSpace, round = 3)
 ```
 
 
-The `bma` function returns a list containing 15 elements. However, most of these elements are only required for other functions. The main objects of interest are the two tables with the BMA statistics. The results obtained with binomial model prior are first on the list.
+Printing the object gives an overview of the fit, `summary` returns the coefficient table with the regressors ordered by posterior inclusion probability, and `coef` extracts the posterior means as a named vector.
+
+```{r}
+summary(bma_results)
+```
+
+```{r}
+coef(bma_results)
+```
+
+Both take a `prior` argument, `"uniform"` for the binomial model prior (the default) or `"random"` for the binomial--beta prior, and `coef` additionally takes `conditional = TRUE` for means conditional on inclusion.
+
+The `bma` function returns a list containing 16 elements. However, most of these elements are only required for other functions. The main objects of interest are the two tables with the BMA statistics. The results obtained with binomial model prior are first on the list.
 
 ```{r}
 
@@ -612,11 +732,11 @@ for_models <- model_pmp(bma_results)
 
 
 The graphs demonstrate that great share of the posterior probability mass is concentrated within just a couple of models.
-To view the results for only the best models, the user can use the `top` parameter.
+To view the results for only the best models, the user can use the `top` parameter. Both `model_pmp` and `model_sizes` also take a `type` argument: `"line"`, the default, draws the prior and posterior as lines, while `"histogram"` draws them as side-by-side bars. The bars make individual models easier to tell apart once `top` is small, and the lines stay readable when it is not; the numbers behind the two are the same.
 
 ```{r}
 
-for_models <- model_pmp(bma_results, top = 10)
+for_models <- model_pmp(bma_results, top = 10, type = "histogram")
 ```
 
 
@@ -637,6 +757,12 @@ size_graphs <- model_sizes(bma_results)
 
 
 The graph illustrates that the posterior distribution over model sizes is largely independent of the prior specification, as it appears very similar under both the binomial and the binomial--beta model priors.
+
+The same `type` argument applies here. Model size is discrete, so `"histogram"` puts a bar at each integer size, which makes the mass at any one of them easier to read; the line form is easier to follow when the model space is large.
+
+```{r}
+size_bars <- model_sizes(bma_results, type = "histogram")
+```
 
 ## Selecting the best models
 
@@ -952,7 +1078,7 @@ The numerical indices can be displayed alongside the regressor names by executin
 
 ```{r}
 
-cbind(modelSpace[[1]],group_vec)
+cbind(modelSpace$x_names, group_vec)
 ```
 
 

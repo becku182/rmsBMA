@@ -39,7 +39,7 @@ fast_ols_HC <- function(y, x){
   # fitted + residuals
   y_hat <- x %*% betas
   res <- y - y_hat
-  SSR <- crossprod(res)
+  SSR <- snap_zero(crossprod(res), sum(y^2), m)
   df <- m - r - 1
 
   # HC1 covariance + SE (ONLY)
@@ -50,7 +50,7 @@ fast_ols_HC <- function(y, x){
 
   # R^2, log-like
   y_m <- mean(y)
-  SST <- crossprod(y - y_m)
+  SST <- snap_zero(crossprod(y - y_m), sum(y^2), m)
   R2 <- 1 - (SSR/SST)
   log_like <- (-r/2) * log(m) + (-m/2) * log(SSR) #(Leamer, 1978)
 

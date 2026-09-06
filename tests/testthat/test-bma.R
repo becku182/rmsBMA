@@ -17,7 +17,10 @@ test_that("bma returns a well-formed object on a tiny model space (K=2)", {
 
   # --- list shape
   expect_type(out, "list")
-  expect_length(out, 15)
+  # 16 since MC^3: element 16 carries chain diagnostics, NULL when the model
+  # space was enumerated. Elements 1-15 are unchanged and still positional.
+  expect_length(out, 16)
+  expect_null(out[[16]])
 
   # --- extracted scalars
   expect_equal(out[[6]], 2)          # K

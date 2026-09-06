@@ -3,8 +3,17 @@
 \name{model_sizes}
 \alias{model_sizes}
 \title{Graphs of the prior and posterior model probabilities of the model sizes}
+\usage{
+model_sizes(bma_list, type = c("line", "histogram"))
+}
 \arguments{
 \item{bma_list}{bma_list object (the result of the bma function)}
+
+\item{type}{Character, either \code{"line"} (the default) for the prior and
+posterior drawn as lines against model size, or \code{"histogram"} for them
+drawn as side-by-side bars. Model size is discrete, so the bars are a
+histogram of probability mass over sizes; the line form is easier to read
+when the model space is large and the two forms are otherwise identical.}
 }
 \value{
 A list with three graphs with prior and posterior model probabilities for model sizes:\cr
@@ -27,6 +36,8 @@ modelSpace <- model_space(data, M = 9, g = "UIP")
 bma_list <- bma(modelSpace)
 sizes <- model_sizes(bma_list)
 sizes[[1]]
+bars <- model_sizes(bma_list, type = "histogram")
+bars[[1]]
 }
 
 }

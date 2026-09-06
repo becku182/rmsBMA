@@ -3,10 +3,19 @@
 \name{model_pmp}
 \alias{model_pmp}
 \title{Graphs of the prior and posterior model probabilities for the best individual models}
+\usage{
+model_pmp(bma_list, top = NULL, type = c("line", "histogram"))
+}
 \arguments{
 \item{bma_list}{bma_list object (the result of the bma function)}
 
 \item{top}{The number of the best model to be placed on the graphs}
+
+\item{type}{Character, either \code{"line"} (the default) for the prior and
+posterior drawn as lines against the model ranking, or \code{"histogram"}
+for them drawn as side-by-side bars. The bar form is best suited to a small
+\code{top}, where individual models can still be told apart; with a large
+\code{top} the line form remains readable. The two are otherwise identical.}
 }
 \value{
 A list with three graphs with prior and posterior model probabilities for individual models:\cr
@@ -30,5 +39,7 @@ modelSpace <- model_space(data, M = 9, g = "UIP")
 bma_list <- bma(modelSpace)
 model_pmps <- model_pmp(bma_list, top = 100)
 model_pmps[[1]]
+model_bars <- model_pmp(bma_list, top = 10, type = "histogram")
+model_bars[[1]]
 }
 }

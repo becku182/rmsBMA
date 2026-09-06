@@ -56,6 +56,14 @@ bma <- function(modelSpace,
   M <- modelSpace[[4]][1] # extraction of the maximum number of regressors in the model
   ols_results<-modelSpace[[2]][] # extraction of the ols the model space
 
+  # Element 6 is present only for MC^3 model spaces. Under MC^3, MS above is
+  # the number of DISTINCT MODELS VISITED, not the size of the model space.
+  # Element 6 records how the space was built. Detect MC^3 from that field
+  # rather than from the length of the list, which is now always 6.
+  ms_info  <- if (length(modelSpace) >= 6L) modelSpace[[6]] else NULL
+  is_mc3   <- !is.null(ms_info) && identical(ms_info$method, "mc3")
+  mc3_info <- if (is_mc3) ms_info else NULL
+
   # Dividing ols results into relevant parts
   Reg_ID <- ols_results[,1:K] # we extract vector indices
   betas <- ols_results[,(K+1):(2*K+1)] # we extract coefficients
@@ -94,6 +102,15 @@ bma <- function(modelSpace,
   if (dilution==1&Narrative==1){stop("Please choose which diltution prior you want to choose:
         regular (dilution=1 and Narrative=0) or narrative (dilution=0 and Narrative=1).
         YOU CANNOT CHOOSE BOTH!")}
+
+  if (is_mc3 && (dilution == 1 || Narrative == 1)) {
+    warning("Dilution priors under MC3 are applied by reweighting the visited ",
+            "models: the chain explored the space under a uniform model prior, ",
+            "so the visited set is not targeted at the dilution prior. This is ",
+            "reliable for mild dilution and unreliable when dilution strongly ",
+            "downweights the region the chain explored. Check that posterior ",
+            "mass is not concentrated on a handful of models.", call. = FALSE)
+  }
 
   ###### CONDITION for dilution prior
   if (dilution==1){
@@ -141,27 +158,23 @@ bma <- function(modelSpace,
   ##################################
 
   ##### FOR model_sizes
-  sizes <- matrix(choose(K, 0:K), ncol  = 1)
-  ind <- matrix(cumsum(sizes), nrow = K+1, ncol = 1) # we create a vector with the number of models in each model size category
-  ind <- ind[1:(M+1),1]
-
-  for_sizes <- cbind(rowSums(Reg_ID),uniform_models,random_models)
-  for_sizes <- for_sizes[order(for_sizes[,1]), ]
-  uniform_models_ordered <- matrix(for_sizes[,2], nrow = MS, ncol = 1)
-  random_models_ordered <- matrix(for_sizes[,3], nrow = MS, ncol = 1)
+  # Aggregate by the model size each row actually has. The previous version
+  # indexed into cumulative choose(K, j) counts, which is only valid when the
+  # rows are the complete enumeration in size order. Under MC^3 the visited set
+  # holds an arbitrary number of models per size, so that indexing is wrong.
+  # For an enumerated space this produces identical results.
+  r_vec <- as.numeric(rowSums(Reg_ID))
   pmp_uniform_sizes <- matrix(0, nrow = M+1, ncol = 1)
-  pmp_random_sizes <- matrix(0, nrow = M+1, ncol = 1)
+  pmp_random_sizes  <- matrix(0, nrow = M+1, ncol = 1)
 
-  for (i in 1:(M+1)){
-    if (i==1){uniform_sizes[i,1] = uniform_models_ordered[1,1]
-    random_sizes[i,1] = random_models_ordered[1,1]
-    pmp_uniform_sizes[i,1] = pmp_uniform[1,1]
-    pmp_random_sizes[i,1] = pmp_random[1,1]} # the case of the model with no regressors
-    else{uniform_sizes[i,1] = sum(uniform_models_ordered[(ind[i-1]+1):ind[i],1])
-    random_sizes[i,1] = sum(random_models_ordered[(ind[i-1]+1):ind[i],1])
-    pmp_uniform_sizes[i,1] = sum(pmp_uniform[(ind[i-1]+1):ind[i],1])
-    pmp_random_sizes[i,1] = sum(pmp_random[(ind[i-1]+1):ind[i],1])
-    } # the case of models with regressors
+  for (i in 0:M){
+    sel <- (r_vec == i)
+    if (any(sel)){
+      uniform_sizes[i+1,1]     <- sum(uniform_models[sel,1])
+      random_sizes[i+1,1]      <- sum(random_models[sel,1])
+      pmp_uniform_sizes[i+1,1] <- sum(pmp_uniform[sel,1])
+      pmp_random_sizes[i+1,1]  <- sum(pmp_random[sel,1])
+    }
   }
   ##########################################################
 
@@ -200,10 +213,21 @@ bma <- function(modelSpace,
   PSD_uniform <- (PM_dev_uniform + var_uniform)^(0.5)
   PSD_random <- (PM_dev_random + var_random)^(0.5)
 
-  beta_MS <- colSums(Reg_ID)[[1]] # Number of model in which a regressor is present
+  # Number of models containing each regressor. The previous version took
+  # colSums(Reg_ID)[[1]] -- the count for the FIRST regressor -- and used it for
+  # every regressor. That holds by symmetry for a complete enumeration, where
+  # each regressor appears in the same number of models, but not for an MC^3
+  # visited set, where the counts differ per regressor.
+  incl_counts <- as.numeric(colSums(Reg_ID))
+  beta_MS <- max(incl_counts)
+
   alphas <- matrix(betas[,1], nrow = MS, ncol = 1)
   just_betas <- matrix(betas[,2:(K+1)], nrow = MS, ncol = K)
-  betas_nonzero <- matrix(0, nrow = beta_MS, ncol = K)
+
+  # betas_nonzero is plotted downstream, so short columns are padded with NA
+  # rather than 0: a padded zero would show up as a real coefficient of zero.
+  # The pmp matrices stay 0-padded, which contributes nothing to the PIP sums.
+  betas_nonzero <- matrix(NA_real_, nrow = beta_MS, ncol = K)
   PM_uniform_nonzero <- matrix(0, nrow = beta_MS, ncol = K)
   PM_random_nonzero <- matrix(0, nrow = beta_MS, ncol = K)
   Positive_betas <- matrix(0, nrow = K, ncol = 1)
@@ -211,17 +235,21 @@ bma <- function(modelSpace,
 
   for (i in 1:K){
     k=1
+    n_pos <- 0
     for (j in 1:MS){
       if (just_betas[j,i]!=0){
         betas_nonzero[k,i] = just_betas[j,i]
         PM_uniform_nonzero[k,i] = pmp_uniform[j,1]
         PM_random_nonzero[k,i] = pmp_random[j,1]
         if (just_betas[j,i]>0){
-          Positive_betas[i,1] = 1/beta_MS + Positive_betas[i,1]
+          n_pos <- n_pos + 1
         }
         k <- k + 1
       }
     }
+    # Share of the models containing regressor i in which its coefficient is
+    # positive, using that regressor's own inclusion count as the denominator.
+    if (incl_counts[i] > 0) Positive_betas[i,1] <- n_pos / incl_counts[i]
   }
 
   PIP_uniform <- rbind(1, matrix(apply(PM_uniform_nonzero, 2, sum), nrow = K, ncol = 1))
@@ -261,29 +289,42 @@ bma <- function(modelSpace,
   random_table[1,1] <- NA
 
   # EXTREME BOUND ANALYSIS
-  eba_num <- eba(betas, VAR, Reg_ID)   # numeric matrix
-  rownames(eba_num) <- c("CONST", x_names)
-
-  # EBA test (character)
-  eba_test <- ifelse(sign(eba_num[, 1]) == sign(eba_num[, 5]), "PASS", "FAIL")
-
-  # Round numeric outputs
-  eba_num <- round(eba_num, round)
+  # EBA reports minima and maxima over the model space. A sampler never visits
+  # the extremes, so bounds computed from a visited set are systematically too
+  # NARROW -- which makes a regressor look more robust than it is. That failure
+  # is silent and directional, so EBA is withheld entirely under MC^3 rather
+  # than reported with a caveat.
   Positive <- round(Positive, round)
 
-  # Build a nice-looking data frame
-  eba_object <- data.frame(
-    Variable    = rownames(eba_num),
-    `Lower bound` = eba_num[, 1],
-    Minimum       = eba_num[, 2],
-    Mean          = eba_num[, 3],
-    Maximum       = eba_num[, 4],
-    `Upper bound` = eba_num[, 5],
-    `EBA test`    = eba_test,
-    `%(+)`        = Positive,
-    row.names = NULL,
-    check.names = FALSE
-  )
+  if (is_mc3) {
+    eba_object <- NULL
+    message("Extreme Bounds Analysis is not available for an MC3 model space: ",
+            "extreme bounds require the minimum and maximum over ALL models, ",
+            "and a sampled subset systematically understates both. ",
+            "Element 3 of the returned list is NULL.")
+  } else {
+    eba_num <- eba(betas, VAR, Reg_ID)   # numeric matrix
+    rownames(eba_num) <- c("CONST", x_names)
+
+    # EBA test (character)
+    eba_test <- ifelse(sign(eba_num[, 1]) == sign(eba_num[, 5]), "PASS", "FAIL")
+
+    eba_num <- round(eba_num, round)
+
+    # Build a nice-looking data frame
+    eba_object <- data.frame(
+      Variable    = rownames(eba_num),
+      `Lower bound` = eba_num[, 1],
+      Minimum       = eba_num[, 2],
+      Mean          = eba_num[, 3],
+      Maximum       = eba_num[, 4],
+      `Upper bound` = eba_num[, 5],
+      `EBA test`    = eba_test,
+      `%(+)`        = Positive,
+      row.names = NULL,
+      check.names = FALSE
+    )
+  }
 
   ### POSTERIOR MODEL TABLE
   PIPs <- cbind(PIP_uniform, PIP_random)
@@ -313,7 +354,8 @@ bma <- function(modelSpace,
                    for_model_pmp,
                    for_model_sizes,
                    alphas,
-                   betas_nonzero)
+                   betas_nonzero,
+                   mc3_info)
 
   names(bma_list) <- c("Table with the binomial model prior results",
                        "Table with the binomial model prior results",
@@ -329,6 +371,13 @@ bma <- function(modelSpace,
                        "Table for model_pmp function",
                        "Table for model_sizes function",
                        "Vector with the values of the constant",
-                       "Matrix with coefficients on regressors")
-  return(bma_list)
+                       "Matrix with coefficients on regressors",
+                       "MC3 chain diagnostics (NULL for an enumerated model space)")
+
+  # Do not leave slot 3 labelled as an EBA table when it holds NULL.
+  if (is_mc3) {
+    names(bma_list)[3] <- "Extreme Bounds Analysis (not available for an MC3 model space)"
+  }
+  attr(bma_list, "space_info") <- ms_info
+  return(structure(bma_list, class = "bma"))
 }

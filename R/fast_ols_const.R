@@ -35,6 +35,15 @@ fast_ols_const <- function(y){
   se_B = diag(var_B)^(0.5) # we calculate standard errors of the coefficients
   y_m = mean(y) #we calculate the mean value of the dependent variable
   SST = t(y - y_m*matrix(1, nrow = m, 1))%*%(y - y_m*matrix(1, nrow = m, 1)) # total sum of squares of the regression
+  # A constant y fits exactly, so SSR and SST are zero in exact arithmetic.
+  # Whether the BLAS returns exactly zero or a rounding-level residual decided
+  # whether log_like came out Inf or a large finite number, which made results
+  # platform-dependent. Snapping both makes the degenerate case identical
+  # everywhere: R2 = NaN, log_like = Inf.
+  y_scale <- sum(y^2)
+  SSR <- snap_zero(SSR, y_scale, m)
+  SST <- snap_zero(SST, y_scale, m)
+
   R2 <- 1 - (SSR/SST) # calculation of R^2
   log_like <- (-m/2) * log(SSR) # value of the likelihood function (Leamer, 1978)
 

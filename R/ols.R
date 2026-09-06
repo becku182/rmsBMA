@@ -55,14 +55,14 @@ ols <- function(y, x, const, Norm = NULL){
   betas = solve(t(x)%*%x)%*%t(x)%*%y # we estimate the model parameters - general version
   y_hat = x%*%betas # we obtain the theoretical values
   res = y - y_hat # we calculate the residuals
-  SSR = t(res)%*%res # sum of squares of the residuals
+  SSR = snap_zero(t(res)%*%res, sum(y^2), m) # sum of squares of the residuals
   df = m - n # we calculate the number of the degrees of freedom
   sigma2 = (t(res)%*%res)/df # we calculate error variance
   sigma = sigma2^(0.5) # we obtain standard error of the regression
   var_B = as.numeric(sigma2)*solve(t(x)%*%x) # we calculate variances of the coefficients - for general version
   se_B = diag(var_B)^(0.5) # we calculate standard errors of the coefficients
   y_m = mean(y) #we calculate the mean value of the dependent variable
-  SST = t(y - y_m*matrix(1, nrow = m, 1))%*%(y - y_m*matrix(1, nrow = m, 1)) # total sum of squares of the regression
+  SST = snap_zero(t(y - y_m*matrix(1, nrow = m, 1))%*%(y - y_m*matrix(1, nrow = m, 1)), sum(y^2), m) # total sum of squares of the regression
   R2 <- 1 - (SSR/SST) # calculation of R^2
 
   # THERE IS A PROBLEM WITH LIKELIHOOD FUNCTION - NUMBERS TOO CLOSE TO ZERO

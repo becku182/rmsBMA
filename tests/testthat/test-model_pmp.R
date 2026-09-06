@@ -108,3 +108,57 @@ test_that("model_pmp plots carry expected axis labels (sanity check)", {
   expect_true(out[[1]]$labels$x %in% c("Model number in the raniking", "Model number in the ranking"))
   expect_equal(out[[1]]$labels$y, "Prior, Posterior")
 })
+
+test_that("model_pmp type argument switches the geometry", {
+  skip_if_not_installed("ggpubr")
+  set.seed(6)
+  m <- 40; K <- 5
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  b <- bma(model_space(d, M = K, g = "UIP"), EMS = 2, round = 6)
+
+  geom_of <- function(p) class(p$layers[[1]]$geom)[1]
+  line <- suppressWarnings(model_pmp(b, top = 8))                      # default
+  hist <- suppressWarnings(model_pmp(b, top = 8, type = "histogram"))
+
+  expect_identical(geom_of(line[[1]]), "GeomLine")
+  expect_identical(geom_of(hist[[1]]), "GeomCol")
+  expect_identical(geom_of(line[[2]]), "GeomLine")
+  expect_identical(geom_of(hist[[2]]), "GeomCol")
+
+  # same numbers behind both, only the geometry differs
+  expect_equal(line[[1]]$data, hist[[1]]$data)
+  expect_equal(line[[2]]$data, hist[[2]]$data)
+
+  expect_error(model_pmp(b, type = "pie"))
+})
+
+test_that("model_pmp labels its x axis consistently", {
+  skip_if_not_installed("ggpubr")
+  set.seed(7)
+  m <- 40; K <- 4
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  b <- bma(model_space(d, M = K, g = "UIP"), EMS = 2, round = 6)
+  p <- suppressWarnings(model_pmp(b, top = 5))
+  # was "raniking" on the two untitled graphs and "ranking" on the combined one
+  expect_identical(p[[1]]$labels$x, "Model number in the ranking")
+  expect_identical(p[[2]]$labels$x, "Model number in the ranking")
+})
+
+test_that("model_pmp reports the right number when top exceeds the space", {
+  skip_if_not_installed("ggpubr")
+  set.seed(8)
+  m <- 40; K <- 4
+  X <- matrix(stats::rnorm(m * K), m, K)
+  y <- 1 + X[, 1] + stats::rnorm(m)
+  d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
+  b  <- bma(model_space(d, M = K, g = "UIP"), EMS = 2, round = 6)
+  MS <- b[[7]]
+  msgs <- paste(capture_messages(suppressWarnings(model_pmp(b, top = MS + 500))),
+                collapse = "")
+  # the message used to name R, the number of regressors, while setting top = MS
+  expect_match(msgs, paste0("Setting top = ", MS))
+})
