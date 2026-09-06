@@ -6,13 +6,20 @@ the CRAN check machines for version 0.1.2.
 ## Test environments
 
 * local: macOS 15.7.4, R 4.4.1, aarch64-apple-darwin20
-* win-builder: R-devel                    [PENDING -- paste result]
+* win-builder: R-devel (2026-09-04 r90492 ucrt), 1 NOTE
 * win-builder: R release                  [PENDING -- paste result]
 * macOS builder: R release                [PENDING -- paste result]
 
 ## R CMD check results
 
-Local check: 0 errors | 0 warnings | 2 notes.
+win-builder, R-devel: 0 errors | 0 warnings | 1 note.
+
+* `Possibly misspelled words in DESCRIPTION: Madigan (18:45)`. This is the
+  surname of the first author of Madigan and York (1995), the paper the MC^3
+  sampler implements. It is spelled correctly.
+
+Local check on macOS: 0 errors | 0 warnings | 2 notes. Neither appeared on
+win-builder.
 
 * `checking for future file timestamps ... NOTE -- unable to verify current
   time`. The check machine could not reach the time server. Not reproducible
