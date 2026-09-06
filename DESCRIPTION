@@ -12,8 +12,11 @@ Description: Implements Bayesian model averaging for settings with many
     freedom for estimation. It provides posterior summaries, Extreme Bounds
     Analysis, model selection procedures, joint inclusion measures, and
     graphical tools for exploring model probabilities, model size
-    distributions, and coefficient distributions. The methodological
-    approach follows Doppelhofer and Weeks (2009) <doi:10.1002/jae.1046>.
+    distributions, and coefficient distributions. When the model space is too
+    large to enumerate, it can be explored by Markov chain Monte Carlo model
+    composition instead. The methodological approach follows Doppelhofer and
+    Weeks (2009) <doi:10.1002/jae.1046> and Madigan and York (1995)
+    <doi:10.2307/1403615>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
