@@ -32,8 +32,6 @@
 #'
 #' @name model_sizes
 
-utils::globalVariables(c("ID", "Value", "Probability"))
-
 model_sizes <- function(bma_list, type = c("line", "histogram")){
 
   type <- match.arg(type)

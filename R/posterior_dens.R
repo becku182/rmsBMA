@@ -23,8 +23,6 @@
 #' distPlots[[2]]
 #' }
 
-utils::globalVariables(".data")
-
 posterior_dens <- function(bma_list, prior = "binomial"){
 
   if (!(prior %in% c("binomial", "beta"))) {

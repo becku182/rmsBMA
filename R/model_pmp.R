@@ -34,8 +34,6 @@
 #'}
 #'@name model_pmp
 
-utils::globalVariables(c("ID", "Value", "Probability"))
-
 model_pmp <- function(bma_list, top = NULL, type = c("line", "histogram")){
 
 type <- match.arg(type)

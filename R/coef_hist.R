@@ -38,8 +38,6 @@
 #' }
 #'
 
-utils::globalVariables(".data")
-
 coef_hist <- function(bma_list, weight = NULL, BW = "FD", binW = NULL, BN = 0, num = NULL, kernel = 0){
 
 if (!(is.null(weight) || weight %in% c("binomial", "beta"))) {
