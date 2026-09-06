@@ -39,7 +39,7 @@ fast_ols <- function(y, x){
 
   # residuals + SSR
   res <- y - x %*% betas
-  SSR <- crossprod(res)
+  SSR <- snap_zero(crossprod(res), sum(y^2), m)
 
   # variance, vcov, se (classical)
   sigma2 <- as.numeric(SSR) / df
@@ -48,7 +48,7 @@ fast_ols <- function(y, x){
 
   # R2
   yc <- y - mean(y)
-  SST <- crossprod(yc)
+  SST <- snap_zero(crossprod(yc), sum(y^2), m)
   R2 <- 1 - (SSR / SST)
 
   # log-likelihood term (as in your code)

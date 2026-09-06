@@ -80,6 +80,14 @@ g_regression_fast_HC <- function(data, g = 0.5) {
   y_m <- mean(y)
   y_center_ss <- yty - m * (y_m^2)
 
+  # Both of these are zero in exact arithmetic when the fit is exact, but the
+  # BLAS decides whether they come out as exactly zero or at rounding level,
+  # which made log(EX_1) platform-dependent. y_center_ss is a difference of two
+  # nearly equal numbers, so cancellation can also make it slightly negative and
+  # send log() to NaN. Snapping removes both outcomes. See R/numeric_guards.R.
+  yPzy        <- snap_zero(yPzy, yty, m)
+  y_center_ss <- snap_zero(y_center_ss, yty, m)
+
   EX_1 <- (1/(g+1)) * yPzy + (g/(g+1)) * y_center_ss
 
   se_2 <- EX_1 / m
