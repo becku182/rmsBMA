@@ -71,15 +71,15 @@ mc3_fit_row <- function(y, x, incl, K, g_none, g_val, HC) {
 #' MC^3 sampler over a model space with at most M regressors
 #'
 #' Metropolis-Hastings random walk over models, in the manner of
-#' Madigan and York (1995). From the current model a neighbour is proposed by
+#' Madigan and York (1995). From the current model a neighbor is proposed by
 #' flipping one inclusion indicator, chosen uniformly at random among the
 #' moves the constraint allows.
 #'
-#' Under the restriction |g| <= M the neighbourhood of a model of size r is
+#' Under the restriction |g| <= M the neighborhood of a model of size r is
 #'
 #' ```
-#'   r <  M : (K - r) additions + r deletions = K neighbours
-#'   r == M : no additions,       M deletions = M neighbours
+#'   r <  M : (K - r) additions + r deletions = K neighbors
+#'   r == M : no additions,       M deletions = M neighbors
 #' ```
 #'
 #' so its size is not constant and the proposal is NOT symmetric. Writing
@@ -93,14 +93,14 @@ mc3_fit_row <- function(y, x, incl, K, g_none, g_val, HC) {
 #' Dropping that factor does not produce an error, it silently changes the
 #' target: the uncorrected chain converges to a distribution proportional to
 #' p(g | y) * |nbd(g)| rather than to p(g | y). Because boundary models (those
-#' of size exactly M) have the SMALLER neighbourhood, they end up
+#' of size exactly M) have the SMALLER neighborhood, they end up
 #' under-weighted by a factor of M / K, biasing inference towards smaller
-#' models. When M = K every model has exactly K neighbours, the factor is 1,
+#' models. When M = K every model has exactly K neighbors, the factor is 1,
 #' and this reduces to the textbook symmetric random walk.
 #'
 #' The chain targets the posterior under a UNIFORM prior over the admissible
 #' models, i.e. proportional to the marginal likelihood alone. Model priors are
-#' applied afterwards in bma(), which renormalises over the visited models.
+#' applied afterwards in bma(), which renormalizes over the visited models.
 #' The binomial model prior with EMS = K/2 is exactly uniform over models, so
 #' for the default EMS the reweighting is exact.
 #'
@@ -120,7 +120,7 @@ mc3_sample <- function(y, x, K, M, draws, burn, g_none, g_val, HC) {
 
   if (M < 1L) stop("MC3 requires M >= 1.")
 
-  # Number of single-flip neighbours of a model of size r under |g| <= M.
+  # Number of single-flip neighbors of a model of size r under |g| <= M.
   nbd_size <- function(r) if (r < M) K else M
 
   total  <- burn + draws

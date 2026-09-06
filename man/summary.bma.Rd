@@ -3,7 +3,7 @@
 \name{summary.bma}
 \alias{summary.bma}
 \alias{print.summary.bma}
-\title{Summarise a BMA object}
+\title{Summarize a BMA object}
 \usage{
 \method{summary}{bma}(object, prior = c("uniform", "random"), ...)
 
@@ -23,5 +23,5 @@ prior or \code{"random"} for the binomial-beta prior.}
 An object of class \code{summary.bma}, invisibly printed.
 }
 \description{
-Summarise a BMA object
+Summarize a BMA object
 }

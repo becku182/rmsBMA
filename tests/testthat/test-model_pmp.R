@@ -105,7 +105,7 @@ test_that("model_pmp plots carry expected axis labels (sanity check)", {
   out <- model_pmp(b, top = 2)
 
   # ggplot objects have labels stored in $labels
-  expect_true(out[[1]]$labels$x %in% c("Model number in the raniking", "Model number in the ranking"))
+  expect_identical(out[[1]]$labels$x, "Model number in the ranking")
   expect_equal(out[[1]]$labels$y, "Prior, Posterior")
 })
 
@@ -143,7 +143,7 @@ test_that("model_pmp labels its x axis consistently", {
   d <- cbind(y, X); colnames(d) <- c("y", paste0("x", seq_len(K)))
   b <- bma(model_space(d, M = K, g = "UIP"), EMS = 2, round = 6)
   p <- suppressWarnings(model_pmp(b, top = 5))
-  # was "raniking" on the two untitled graphs and "ranking" on the combined one
+  # the two untitled graphs previously carried a misspelled axis label
   expect_identical(p[[1]]$labels$x, "Model number in the ranking")
   expect_identical(p[[2]]$labels$x, "Model number in the ranking")
 })

@@ -151,7 +151,7 @@ test_that("a short chain warns about non-convergence, a long one does not", {
     model_space(d, mc3 = TRUE, draws = 100000, burn = 10000)))
 })
 
-test_that("slot 3 is not labelled an EBA table when it is NULL", {
+test_that("slot 3 is not labeled an EBA table when it is NULL", {
   d <- make_data()
   ms <- quiet_mc3(model_space(d, mc3 = TRUE, draws = 1000, burn = 500))
   b  <- suppressMessages(bma(ms, round = 12))

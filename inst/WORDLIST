@@ -4,6 +4,7 @@ Aves
 BACE
 Barro
 binW
+BLIS
 BMA
 bma
 BN
@@ -17,8 +18,8 @@ Diaconis
 doi
 Doppelhofer
 DW
-EBA
 eba
+EBA
 EF
 et
 GDPs
@@ -43,18 +44,20 @@ Lazarski
 Leamer
 Ley
 MacKinnon
+Madigan
 modelSpace
 Moser
 Multicollinearity
 multicollinearity
+nbd
 noninformative
 num
 ols
 PIP
 PIPs
 PMcon
-PMP
 pmp
+PMP
 PMPs
 pms
 positivity
@@ -67,6 +70,7 @@ PSDcon
 renormalized
 RIC
 rootUIP
+roxygen
 Sala
 twoway
 UIP

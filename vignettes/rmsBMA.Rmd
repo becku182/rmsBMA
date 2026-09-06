@@ -536,7 +536,7 @@ For the reminder of the manuscript we are going to utilize smaller model space a
 modelSpace <- model_space(Trade_data_small, M = 7, g = "UIP")
 ```
 
-The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list of six components: the regressor names, the model space itself, its size, `M`, `K`, and an `info` element recording how the space was built. Printing the object summarises those settings, and `summary` adds the distribution of models by size.
+The object `modelSpace`, constructed according to the specification of the `model_space` function described above, is included in the package. The `model_space` function returns a list of six components: the regressor names, the model space itself, its size, `M`, `K`, and an `info` element recording how the space was built. Printing the object summarizes those settings, and `summary` adds the distribution of models by size.
 
 ```{r}
 modelSpace
@@ -552,13 +552,13 @@ The components remain reachable by position or by name --- `modelSpace[[2]]` and
 
 With $K$ regressors and $M = K$ there are $2^K$ models --- $131{,}072$ for the seventeen in `Trade_data` --- and restricting to $M < K$ helps less than it might seem: $K = 100$ with $M = 7$ still leaves some $1.6 \times 10^{10}$. Beyond roughly twenty regressors, enumeration stops being an option.
 
-Setting `mc3 = TRUE` replaces it with Markov Chain Monte Carlo Model Composition [MC$^3$, @Madigan+1995; @Raftery+1997], a Metropolis--Hastings random walk over the model space. A neighbour $\gamma'$ of the current model $\gamma$ is proposed by adding or dropping a single regressor and accepted with probability
+Setting `mc3 = TRUE` replaces it with Markov Chain Monte Carlo Model Composition [MC$^3$, @Madigan+1995; @Raftery+1997], a Metropolis--Hastings random walk over the model space. A neighbor $\gamma'$ of the current model $\gamma$ is proposed by adding or dropping a single regressor and accepted with probability
 
 $$
 \alpha(\gamma, \gamma') = \min\left\{1, \; \frac{p(y \mid \gamma')\, p(\gamma')}{p(y \mid \gamma)\, p(\gamma)} \cdot \frac{|\mathrm{nbd}(\gamma)|}{|\mathrm{nbd}(\gamma')|}\right\},
 $$
 
-where $|\mathrm{nbd}(\cdot)|$ counts a model's neighbours. The chain visits each model in proportion to its posterior probability, so models carrying negligible mass are never visited at all and the cost depends on how many models matter rather than on how many exist.
+where $|\mathrm{nbd}(\cdot)|$ counts a model's neighbors. The chain visits each model in proportion to its posterior probability, so models carrying negligible mass are never visited at all and the cost depends on how many models matter rather than on how many exist.
 
 `draws` is the number of retained draws and `burn` the number discarded, so the chain runs for `draws + burn` iterations; `burn` defaults to `draws`. The `M` argument behaves as it does under enumeration.
 
@@ -598,7 +598,7 @@ A second warning fires when the acceptance rate falls below two per cent. `cor_p
 
 ### Reduced model spaces
 
-Under $|\gamma| \le M$ the neighbourhood is not of constant size. A model of size $r$ admits $K - r$ additions and $r$ deletions while $r < M$, but one already holding $M$ regressors can only delete:
+Under $|\gamma| \le M$ the neighborhood is not of constant size. A model of size $r$ admits $K - r$ additions and $r$ deletions while $r < M$, but one already holding $M$ regressors can only delete:
 
 $$
 |\mathrm{nbd}(\gamma)| =
@@ -614,7 +614,7 @@ $$
 \tilde{p}(\gamma \mid y) \;\propto\; p(\gamma \mid y)\,\bigl|\mathrm{nbd}(\gamma)\bigr|,
 $$
 
-and since boundary models carry the smaller neighbourhood, they are the ones that lose mass: inference drifts towards models smaller than $M$. The correction is applied automatically, and equals one when $M = K$.
+and since boundary models carry the smaller neighborhood, they are the ones that lose mass: inference drifts towards models smaller than $M$. The correction is applied automatically, and equals one when $M = K$.
 
 ### Checking the sampler against enumeration
 

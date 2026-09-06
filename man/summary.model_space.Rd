@@ -3,7 +3,7 @@
 \name{summary.model_space}
 \alias{summary.model_space}
 \alias{print.summary.model_space}
-\title{Summarise a model space}
+\title{Summarize a model space}
 \usage{
 \method{summary}{model_space}(object, ...)
 

@@ -35,7 +35,7 @@
   are now snapped to zero, so the degenerate case behaves identically on any
   BLAS. Reported by CRAN's BLIS check machine.
 
-* The same guard removes a cancellation in the g-prior estimators. The centred
+* The same guard removes a cancellation in the g-prior estimators. The centered
   sum of squares was computed as a difference of two nearly equal numbers and
   could come out slightly negative, which would have produced a `NaN` log
   marginal likelihood and propagated silently into the posterior model
@@ -47,8 +47,8 @@
   call, so no usage could be derived. Reported as a NOTE by CRAN's r-devel
   check machines.
 
-* `model_pmp()` labelled the x axis of two of its three graphs
-  "Model number in the raniking", and reported the wrong quantity when `top`
+* `model_pmp()` misspelled "ranking" on the x axis of two of its three
+  graphs, and reported the wrong quantity when `top`
   exceeded the size of the model space.
 
 ## Other

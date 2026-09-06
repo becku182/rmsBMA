@@ -40,7 +40,7 @@ print.model_space <- function(x, ...) {
   invisible(x)
 }
 
-#' Summarise a model space
+#' Summarize a model space
 #'
 #' Reports how the model space was built and how the models in it are
 #' distributed by size. For an MC^3 space the distribution is over the models
@@ -111,7 +111,7 @@ print.bma <- function(x, ...) {
   invisible(x)
 }
 
-#' Summarise a BMA object
+#' Summarize a BMA object
 #'
 #' @param object A \code{bma} object.
 #' @param prior Which model prior to report, \code{"uniform"} for the binomial

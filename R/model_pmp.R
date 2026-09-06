@@ -87,7 +87,7 @@ forGraph2 <- tidyr::gather(forGraph2, key = "Probability", value = "Value", -ID)
 
 # One builder for both display types, both priors and both dilution settings,
 # so that they cannot drift apart. The line form is unchanged apart from the
-# axis label, which previously read "raniking" on the two untitled graphs.
+# axis label, which was previously misspelled on the two untitled graphs.
 pmp_plot <- function(df, title = NULL) {
   p <- ggplot2::ggplot(df, ggplot2::aes(x = ID, y = Value))
   if (type == "line") {
