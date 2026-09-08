@@ -1,3 +1,12 @@
+# rmsBMA (development version)
+
+## Bug fixes
+
+* The list returned by `bma()` named its first two elements identically, both
+  "Table with the binomial model prior results". The second element holds the
+  binomial-beta results and is now named accordingly. Only the name changes;
+  the contents were always correct.
+
 # rmsBMA 0.2.0
 
 ## New features

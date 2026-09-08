@@ -358,7 +358,7 @@ bma <- function(modelSpace,
                    mc3_info)
 
   names(bma_list) <- c("Table with the binomial model prior results",
-                       "Table with the binomial model prior results",
+                       "Table with the binomial-beta model prior results",
                        "Table with Extreme Bounds Analysis results",
                        "Table with prior and posterior model sizes",
                        "Names of variables",
